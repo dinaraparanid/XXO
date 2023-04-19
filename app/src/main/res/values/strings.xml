@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Tic-Tac-Toe</string>
+    <string name="play">Play</string>
+    <string name="settings">Settings</string>
+    <string name="singleplayer">Singleplayer</string>
+    <string name="multiplayer">Multiplayer</string>
+    <string name="create_new_room">Create new room</string>
+    <string name="connect_to_existing_room">Connect to existing room</string>
+    <string name="cross_role">You are a cross</string>
+    <string name="zero_role">You are a zero</string>
+    <string name="your_turn">Your turn!</string>
+    <string name="opponents_turn">Opponent\'s turn</string>
+    <string name="player_not_found">Player isn’t found. Try later</string>
+    <string name="ok">OK</string>
+    <string name="invalid_move">Invalid Move</string>
+    <string name="your_ip">Your IP</string>
+    <string name="host_ip">Host\'s IP</string>
+    <string name="invalid_ip">Invalid ip. Try again</string>
+    <string name="results">Results</string>
+    <string name="draw">Draw</string>
+    <string name="zero_won">Zero won</string>
+    <string name="cross_won">Cross won</string>
+</resources>

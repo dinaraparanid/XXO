@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="ui_handler"
+            type="com.paranid5.tic_tac_toe.presentation.main_activity.MainActivityUIHandler" />
+
+        <variable
+            name="context"
+            type="android.content.Context" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/app_background"
+        tools:context=".presentation.main_activity.MainActivity">
+
+        <carbon.widget.TextView
+            android:id="@+id/app_main_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/pristina"
+            android:gravity="center"
+            android:text="@string/app_name"
+            android:textColor="@color/red_dinaraparanid"
+            android:textSize="75sp"
+            app:carbon_font="@font/pristina"
+            app:carbon_rippleColor="@color/red_dinaraparanid"
+            app:carbon_rippleStyle="over"
+            app:carbon_tint="@color/red_dinaraparanid"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="15dp"
+            android:divider="@drawable/vertical_divider"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:showDividers="middle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/app_main_label">
+
+            <carbon.widget.Button
+                android:id="@+id/play_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/pristina"
+                android:onClickListener="@{() -> ui_handler.onPlayButtonClicked(context)}"
+                android:text="@string/play"
+                android:textAllCaps="false"
+                android:textColor="@color/red_dinaraparanid"
+                android:textSize="60sp"
+                app:carbon_cornerRadius="10dp"
+                app:carbon_elevation="0dp"
+                app:carbon_elevationAmbientShadowColor="@android:color/transparent"
+                app:carbon_elevationShadowColor="@android:color/transparent"
+                app:carbon_elevationSpotShadowColor="@android:color/transparent"
+                app:carbon_font="@font/pristina"
+                app:carbon_rippleColor="@color/red_light_dinaraparanid"
+                app:carbon_rippleStyle="over"
+                app:carbon_tint="@color/red_dinaraparanid" />
+
+            <carbon.widget.Button
+                android:id="@+id/settings_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/pristina"
+                android:onClickListener="@{() -> ui_handler.onSettingsButtonClicked(context)}"
+                android:text="@string/settings"
+                android:textAllCaps="false"
+                android:textColor="@color/red_dinaraparanid"
+                android:textSize="60sp"
+                app:carbon_cornerRadius="10dp"
+                app:carbon_elevation="0dp"
+                app:carbon_elevationAmbientShadowColor="@android:color/transparent"
+                app:carbon_elevationShadowColor="@android:color/transparent"
+                app:carbon_elevationSpotShadowColor="@android:color/transparent"
+                app:carbon_font="@font/pristina"
+                app:carbon_rippleColor="@color/red_light_dinaraparanid"
+                app:carbon_rippleStyle="over"
+                app:carbon_tint="@color/red_dinaraparanid" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:context=".presentation.main_activity.MainActivity" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
