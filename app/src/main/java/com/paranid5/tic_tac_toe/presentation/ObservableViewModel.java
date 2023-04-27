@@ -4,14 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 
 public abstract class ObservableViewModel<P extends BasePresenter, H extends UIHandler> extends ViewModel {
-    @NonNull
-    public final P presenter;
 
     @NonNull
-    public final H handler;
+    public abstract P getPresenter();
 
-    protected ObservableViewModel(final @NonNull P presenter, final @NonNull H handler) {
-        this.presenter = presenter;
-        this.handler = handler;
-    }
+    @NonNull
+    public abstract H getHandler();
+
+    protected abstract void initCallbackObservers();
 }

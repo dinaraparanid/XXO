@@ -1,52 +1,42 @@
 package com.paranid5.tic_tac_toe.presentation.main_activity;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.paranid5.tic_tac_toe.R;
-import com.paranid5.tic_tac_toe.databinding.ActivityMainBinding;
-import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
+import com.paranid5.tic_tac_toe.presentation.GlobalFragmentFactory;
+import com.paranid5.tic_tac_toe.presentation.main_fragment.MainFragment;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public final class MainActivity extends AppCompatActivity implements LifecycleOwner {
-    @NonNull
-    private MainActivityViewModel viewModel;
 
-    @NonNull
-    private ActivityMainBinding binding;
-
-    @NonNull
-    private final StateChangedCallback<MainActivityUIHandler> playButtonClickedCallback = handler -> {
-        handler.onPlayButtonClicked(this);
-        viewModel.onPlayButtonClickedFinished();
-    };
-
-    @NonNull
-    private final StateChangedCallback<MainActivityUIHandler> settingsButtonClickedCallback = handler -> {
-        handler.onSettingsButtonClicked(this);
-        viewModel.onSettingsButtonClickedFinished();
-    };
+    @Inject
+    protected GlobalFragmentFactory fragmentFactory;
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
+    protected void onCreate(final @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        viewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
-
-        binding.setContext(this);
-        binding.setUiHandler(viewModel.handler);
-        handleUIStateChanges();
+        setContentView(R.layout.activity_main);
+        getSupportFragmentManager().setFragmentFactory(fragmentFactory);
+        initFirstFragment();
     }
 
-    private void handleUIStateChanges() {
-        playButtonClickedCallback.observe(this, viewModel.getPlayButtonClickedState(), viewModel.handler);
-        settingsButtonClickedCallback.observe(this, viewModel.getSettingsButtonClickedState(), viewModel.handler);
+    private void initFirstFragment() {
+        if (getSupportFragmentManager().findFragmentById(R.id.fragment_container) == null)
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(
+                            R.id.fragment_container,
+                            MainFragment.class,
+                            null
+                    )
+                    .commit();
     }
 }
