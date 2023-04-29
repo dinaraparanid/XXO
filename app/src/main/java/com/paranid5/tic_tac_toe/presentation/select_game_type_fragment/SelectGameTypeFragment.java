@@ -46,13 +46,7 @@ public final class SelectGameTypeFragment extends Fragment implements UIStateCha
             final @Nullable ViewGroup container,
             final @Nullable Bundle savedInstanceState
     ) {
-        binding = DataBindingUtil.inflate(
-                inflater,
-                R.layout.fragment_select_game_type,
-                container,
-                false
-        );
-
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_select_game_type, container, false);
         viewModel = new ViewModelProvider(this).get(SelectGameTypeViewModel.class);
         binding.setViewModel(viewModel);
 

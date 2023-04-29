@@ -6,7 +6,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
 
+import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.presentation.UIHandler;
+import com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment.SelectGameRoomTypeFragment;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,6 +28,14 @@ public final class SelectGameTypeUIHandler implements UIHandler {
     }
 
     public void onMultiplayerButtonClicked(final @NonNull FragmentManager fragmentManager) {
-
+        fragmentManager
+                .beginTransaction()
+                .replace(
+                        R.id.fragment_container,
+                        SelectGameRoomTypeFragment.class,
+                        null
+                )
+                .addToBackStack(null)
+                .commit();
     }
 }

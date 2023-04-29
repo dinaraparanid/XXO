@@ -22,10 +22,10 @@ import dagger.hilt.android.AndroidEntryPoint;
 public final class MainFragment extends Fragment implements UIStateChangesObserver {
 
     @NonNull
-    private MainFragmentViewModel viewModel;
+    private FragmentMainBinding binding;
 
     @NonNull
-    private FragmentMainBinding binding;
+    private MainFragmentViewModel viewModel;
 
     @NonNull
     private final StateChangedCallback<MainFragmentUIHandler> playButtonClickedCallback = handler -> {
@@ -46,13 +46,7 @@ public final class MainFragment extends Fragment implements UIStateChangesObserv
             final @Nullable ViewGroup container,
             final @Nullable Bundle savedInstanceState
     ) {
-        binding = DataBindingUtil.inflate(
-                inflater,
-                R.layout.fragment_main,
-                container,
-                false
-        );
-
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
         viewModel = new ViewModelProvider(this).get(MainFragmentViewModel.class);
         binding.setViewModel(viewModel);
 

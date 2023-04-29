@@ -1,4 +1,4 @@
-package com.paranid5.tic_tac_toe.presentation.main_activity;
+package com.paranid5.tic_tac_toe.presentation;
 
 import android.os.Bundle;
 
