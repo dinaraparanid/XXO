@@ -2,10 +2,11 @@ package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
+import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
 import javax.inject.Inject;
 
@@ -14,19 +15,26 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public final class SelectGameRoomTypeViewModel extends ObservableViewModel<SelectGameRoomTypePresenter, SelectGameRoomTypeUIHandler> {
     @NonNull
-    SelectGameRoomTypePresenter presenter;
+    private static final String ROLES_KEY = "roles";
 
     @NonNull
-    SelectGameRoomTypeUIHandler handler;
+    final SelectGameRoomTypePresenter presenter;
+
+    @NonNull
+    final SelectGameRoomTypeUIHandler handler;
 
     @Inject
     public SelectGameRoomTypeViewModel(
-            final @NonNull SelectGameRoomTypePresenter presenter,
-            final @NonNull SelectGameRoomTypeUIHandler handler
+            final @NonNull SelectGameRoomTypeUIHandler handler,
+            final @NonNull SavedStateHandle savedStateHandle
     ) {
-        this.presenter = presenter;
+        final PlayerRole[] roles = savedStateHandle.get(ROLES_KEY);
+
+        this.presenter = roles != null
+                ? new SelectGameRoomTypePresenter(roles)
+                : new SelectGameRoomTypePresenter();
+
         this.handler = handler;
-        initCallbackObservers();
     }
 
     @Override
@@ -42,29 +50,10 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
     }
 
     @NonNull
-    private final MediatorLiveData<Boolean> isCreateNewRoomButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isCreateNewRoomButtonClickedMutableState = new MutableLiveData<>(false);
 
     @NonNull
-    private final MediatorLiveData<Boolean> isConnectRoomButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isConnectRoomButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @Override
-    protected void initCallbackObservers() {
-        isCreateNewRoomButtonClickedStateMerger.addSource(
-                isCreateNewRoomButtonClickedMutableState,
-                isCreateNewRoomButtonClickedStateMerger::postValue
-        );
-
-        isConnectRoomButtonClickedStateMerger.addSource(
-                isConnectRoomButtonClickedMutableState,
-                isConnectRoomButtonClickedMutableState::postValue
-        );
-    }
 
     @NonNull
     public LiveData<Boolean> getCreateNewRoomButtonClickedState() {

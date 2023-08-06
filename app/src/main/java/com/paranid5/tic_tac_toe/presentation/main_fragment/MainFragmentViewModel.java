@@ -2,7 +2,6 @@ package com.paranid5.tic_tac_toe.presentation.main_fragment;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
@@ -15,10 +14,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public final class MainFragmentViewModel extends ObservableViewModel<MainFragmentPresenter, MainFragmentUIHandler> {
 
     @NonNull
-    MainFragmentPresenter presenter;
+    final MainFragmentPresenter presenter;
 
     @NonNull
-    MainFragmentUIHandler handler;
+    final MainFragmentUIHandler handler;
 
     @Inject
     public MainFragmentViewModel(
@@ -27,7 +26,6 @@ public final class MainFragmentViewModel extends ObservableViewModel<MainFragmen
     ) {
         this.presenter = presenter;
         this.handler = handler;
-        initCallbackObservers();
     }
 
     @Override
@@ -39,29 +37,10 @@ public final class MainFragmentViewModel extends ObservableViewModel<MainFragmen
     public MainFragmentUIHandler getHandler() { return handler; }
 
     @NonNull
-    private final MediatorLiveData<Boolean> isPlayButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isPlayButtonClickedMutableState = new MutableLiveData<>(false);
 
     @NonNull
-    private final MediatorLiveData<Boolean> isSettingsButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isSettingsButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @Override
-    protected void initCallbackObservers() {
-        isPlayButtonClickedStateMerger.addSource(
-                isPlayButtonClickedMutableState,
-                isPlayButtonClickedStateMerger::postValue
-        );
-
-        isSettingsButtonClickedStateMerger.addSource(
-                isSettingsButtonClickedMutableState,
-                isSettingsButtonClickedMutableState::postValue
-        );
-    }
 
     @NonNull
     public LiveData<Boolean> getPlayButtonClickedState() {

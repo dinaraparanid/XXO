@@ -10,6 +10,4 @@ public abstract class ObservableViewModel<P extends BasePresenter, H extends UIH
 
     @NonNull
     public abstract H getHandler();
-
-    protected abstract void initCallbackObservers();
 }

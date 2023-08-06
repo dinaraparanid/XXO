@@ -4,6 +4,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
+        <variable
+                name="view_model"
+                type="com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragmentViewModel" />
     </data>
 
     <carbon.widget.ConstraintLayout

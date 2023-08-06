@@ -15,6 +15,7 @@ import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.databinding.FragmentSelectGameRoomTypeBinding;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
+import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -27,14 +28,17 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private SelectGameRoomTypeViewModel viewModel;
 
     @NonNull
+    public PlayerRole[] getRoles() { return viewModel.presenter.roles; }
+
+    @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler> createNewRoomButtonClickedCallback = handler -> {
-        handler.onCreateNewRoomButtonClicked();
+        handler.onCreateNewRoomButtonClicked(getParentFragmentManager(), getRoles());
         viewModel.onCreateNewRoomButtonClickedFinished();
     };
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler> connectRoomButtonClickedCallback = handler -> {
-        handler.onConnectRoomButtonClicked();
+        handler.onConnectRoomButtonClicked(getParentFragmentManager(), getRoles());
         viewModel.onConnectRoomButtonClickedFinished();
     };
 

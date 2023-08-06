@@ -2,7 +2,6 @@ package com.paranid5.tic_tac_toe.presentation.select_game_type_fragment;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
@@ -38,29 +37,10 @@ public final class SelectGameTypeViewModel extends ObservableViewModel<SelectGam
     public SelectGameTypeUIHandler getHandler() { return handler; }
 
     @NonNull
-    private final MediatorLiveData<Boolean> isSingleplayerButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isSingleplayerButtonClickedMutableState = new MutableLiveData<>(false);
 
     @NonNull
-    private final MediatorLiveData<Boolean> isMultiplayerButtonClickedStateMerger = new MediatorLiveData<>(false);
-
-    @NonNull
     private final MutableLiveData<Boolean> isMultiplayerButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @Override
-    protected void initCallbackObservers() {
-        isSingleplayerButtonClickedStateMerger.addSource(
-                isSingleplayerButtonClickedMutableState,
-                isSingleplayerButtonClickedStateMerger::postValue
-        );
-
-        isMultiplayerButtonClickedStateMerger.addSource(
-                isMultiplayerButtonClickedMutableState,
-                isMultiplayerButtonClickedMutableState::postValue
-        );
-    }
 
     @NonNull
     public LiveData<Boolean> getSingleplayerButtonClickedState() {

@@ -19,9 +19,13 @@ public final class GameServiceAccessor extends ServiceAccessor {
         super(application);
     }
 
-    public void startService() {
+    public void bindService() {
         final Intent serviceIntent = new Intent(application, GameService.class);
-        application.startService(serviceIntent);
-        application.bindService(serviceIntent, application.gameServiceConnection, Service.BIND_AUTO_CREATE);
+
+        application.bindService(
+                serviceIntent,
+                application.gameServiceConnection,
+                Service.BIND_AUTO_CREATE
+        );
     }
 }

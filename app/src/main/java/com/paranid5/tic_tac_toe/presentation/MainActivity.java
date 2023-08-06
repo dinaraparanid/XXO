@@ -18,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public final class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
     @Inject
-    protected GlobalFragmentFactory fragmentFactory;
+    GlobalFragmentFactory fragmentFactory;
 
     @Override
     protected void onCreate(final @Nullable Bundle savedInstanceState) {
