@@ -36,4 +36,8 @@ public interface ReceiverManager {
                 action
         );
     }
+
+    default void stopReceiver(final @NonNull BroadcastReceiver receiver) {
+        getReceiverContext().unregisterReceiver(receiver);
+    }
 }

@@ -20,4 +20,5 @@
     <string name="draw">Draw</string>
     <string name="zero_won">Zero won</string>
     <string name="cross_won">Cross won</string>
+    <string name="cancel">Cancel</string>
 </resources>

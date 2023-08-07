@@ -24,13 +24,9 @@ public final class SelectGameRoomTypeUIHandler implements UIHandler {
         this.gameServiceAccessor = gameServiceAccessor;
     }
 
-    public void onCreateNewRoomButtonClicked(
-            final @NonNull FragmentManager fragmentManager,
-            final @NonNull PlayerRole[] roles
-    ) {
-        gameServiceAccessor.bindService();
-        switchToGameFragment(fragmentManager, PlayerType.HOST, roles[0], null);
-    }
+    public void onCreateNewRoomButtonClicked() { gameServiceAccessor.bindService(); }
+
+    public void onGameCancelButtonClicked() { gameServiceAccessor.stopServer(); }
 
     public void onConnectRoomButtonClicked(
             final @NonNull FragmentManager fragmentManager,

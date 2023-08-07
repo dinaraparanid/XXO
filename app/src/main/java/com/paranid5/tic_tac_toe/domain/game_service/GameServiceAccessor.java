@@ -28,4 +28,9 @@ public final class GameServiceAccessor extends ServiceAccessor {
                 Service.BIND_AUTO_CREATE
         );
     }
+
+    public void stopServer() {
+        sendBroadcast(GameService.Broadcast_STOP_SERVER);
+        application.unbindService(application.gameServiceConnection);
+    }
 }
