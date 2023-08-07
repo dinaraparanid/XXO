@@ -1,6 +1,7 @@
 package com.paranid5.tic_tac_toe.presentation.game_fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 import java.util.Objects;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 
 @AndroidEntryPoint
 public final class GameFragment extends Fragment implements UIStateChangesObserver {
@@ -45,6 +47,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
     @NonNull
     private PlayerRole playerRole;
+
+    @Nullable
+    private DisposableCompletableObserver clientTask;
 
     GameFragment() {}
 
@@ -83,8 +88,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         observeUIStateChanges();
 
         if (playerType.equals(PlayerType.CLIENT)) {
+            Log.d(TAG, "Client is launching");
             Objects.requireNonNull(host);
-            ClientLauncher.launch(host);
+            clientTask = ClientLauncher.launch(host, viewModel);
         }
 
         return binding.getRoot();

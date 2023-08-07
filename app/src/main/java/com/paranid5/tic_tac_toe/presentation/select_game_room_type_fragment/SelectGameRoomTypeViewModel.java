@@ -59,6 +59,9 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
     private final MutableLiveData<Boolean> isGameCancelButtonClickedMutableState = new MutableLiveData<>(false);
 
     @NonNull
+    private final MutableLiveData<Boolean> isGameStartReceivedMutableState = new MutableLiveData<>(false);
+
+    @NonNull
     public LiveData<Boolean> getCreateNewRoomButtonClickedState() {
         return isCreateNewRoomButtonClickedMutableState;
     }
@@ -95,5 +98,18 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
 
     public void onGameCancelButtonClickedFinished() {
         isGameCancelButtonClickedMutableState.postValue(false);
+    }
+
+    @NonNull
+    public LiveData<Boolean> getGameStartReceivedState() {
+        return isGameStartReceivedMutableState;
+    }
+
+    public void onGameStartReceived() {
+        isGameStartReceivedMutableState.postValue(true);
+    }
+
+    public void onGameStartReceivedFinished() {
+        isGameStartReceivedMutableState.postValue(false);
     }
 }

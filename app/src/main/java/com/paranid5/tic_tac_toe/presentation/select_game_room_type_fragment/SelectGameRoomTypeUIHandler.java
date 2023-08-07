@@ -28,12 +28,18 @@ public final class SelectGameRoomTypeUIHandler implements UIHandler {
 
     public void onGameCancelButtonClicked() { gameServiceAccessor.stopServer(); }
 
-    public void onConnectRoomButtonClicked(
+    public void onGameStartReceived(
             final @NonNull FragmentManager fragmentManager,
-            final @NonNull PlayerRole[] roles
+            final @NonNull PlayerType playerType,
+            final @NonNull PlayerRole[] roles,
+            final @Nullable String host
+    ) { switchToGameFragment(fragmentManager, playerType, roles[0], host); }
+
+    public void onHostInputDone(
+            final @NonNull FragmentManager fragmentManager,
+            final @NonNull PlayerRole[] roles,
+            final @NonNull String host
     ) {
-        // TODO: Real host name input
-        final String host = "127.0.0.1";
         switchToGameFragment(fragmentManager, PlayerType.CLIENT, roles[1], host);
     }
 

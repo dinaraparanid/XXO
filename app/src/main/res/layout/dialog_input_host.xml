@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <carbon.widget.FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <carbon.widget.EditText
+                android:id="@+id/host_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/localhost_hint" />
+
+    </carbon.widget.FrameLayout>
+</layout>

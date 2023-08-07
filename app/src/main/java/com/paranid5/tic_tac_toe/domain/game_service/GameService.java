@@ -14,6 +14,8 @@ import androidx.annotation.Nullable;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ServerLauncher;
 
+import java.util.Objects;
+
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 
@@ -45,8 +47,7 @@ public final class GameService extends Service implements ReceiverManager {
     private final BroadcastReceiver stopServerReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
-            if (serverTask != null) serverTask.dispose();
-            serverTask = null;
+            stopServer();
         }
     };
 
@@ -93,22 +94,24 @@ public final class GameService extends Service implements ReceiverManager {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
+        stopServer();
         unregisterReceivers();
     }
 
     @NonNull
     private DisposableCompletableObserver sendLocalHostAndStartServer() {
-        return ServerLauncher.getLocalHost()
+        return ServerLauncher.getLocalHost(this)
                 .map(host -> {
+                    Objects.requireNonNull(host); // TODO: handle no wifi connection
                     ServerLauncher.sendHost(this, host);
                     return host;
                 })
-                .flatMapCompletable(ServerLauncher::launch)
+                .flatMapCompletable((host) -> ServerLauncher.launch(this, host))
                 .subscribeWith(disposableLaunchObserver());
     }
 
     @NonNull
-    private DisposableCompletableObserver disposableLaunchObserver() {
+    private static DisposableCompletableObserver disposableLaunchObserver() {
         return new DisposableCompletableObserver() {
             @Override
             public void onComplete() {}
@@ -116,5 +119,11 @@ public final class GameService extends Service implements ReceiverManager {
             @Override
             public void onError(final @NonNull Throwable e) {}
         };
+    }
+
+    private void stopServer() {
+        if (serverTask != null)
+            serverTask.dispose();
+        serverTask = null;
     }
 }
