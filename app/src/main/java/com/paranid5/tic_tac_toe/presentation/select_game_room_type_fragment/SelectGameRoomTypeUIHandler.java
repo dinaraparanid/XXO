@@ -1,7 +1,6 @@
 package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
 import com.paranid5.tic_tac_toe.R;
@@ -31,29 +30,19 @@ public final class SelectGameRoomTypeUIHandler implements UIHandler {
     public void onGameStartReceived(
             final @NonNull FragmentManager fragmentManager,
             final @NonNull PlayerType playerType,
-            final @NonNull PlayerRole[] roles,
-            final @Nullable String host
-    ) { switchToGameFragment(fragmentManager, playerType, roles[0], host); }
-
-    public void onHostInputDone(
-            final @NonNull FragmentManager fragmentManager,
-            final @NonNull PlayerRole[] roles,
-            final @NonNull String host
-    ) {
-        switchToGameFragment(fragmentManager, PlayerType.CLIENT, roles[1], host);
-    }
+            final @NonNull PlayerRole role
+    ) { switchToGameFragment(fragmentManager, playerType, role); }
 
     private void switchToGameFragment(
             final @NonNull FragmentManager fragmentManager,
             final @NonNull PlayerType playerType,
-            final @NonNull PlayerRole playerRole,
-            final @Nullable String host
+            final @NonNull PlayerRole playerRole
     ) {
         fragmentManager
                 .beginTransaction()
                 .replace(
                         R.id.fragment_container,
-                        GameFragment.newInstance(playerType, playerRole, host),
+                        GameFragment.newInstance(playerType, playerRole),
                         null
                 )
                 .addToBackStack(null)

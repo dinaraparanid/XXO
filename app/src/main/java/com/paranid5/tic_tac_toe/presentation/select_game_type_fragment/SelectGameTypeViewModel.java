@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
+import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 
 import javax.inject.Inject;
 
@@ -37,34 +38,44 @@ public final class SelectGameTypeViewModel extends ObservableViewModel<SelectGam
     public SelectGameTypeUIHandler getHandler() { return handler; }
 
     @NonNull
-    private final MutableLiveData<Boolean> isSingleplayerButtonClickedMutableState = new MutableLiveData<>(false);
+    private final MutableLiveData<StateChangedCallback.State<Void>> isSingleplayerButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
 
     @NonNull
-    private final MutableLiveData<Boolean> isMultiplayerButtonClickedMutableState = new MutableLiveData<>(false);
+    private final MutableLiveData<StateChangedCallback.State<Void>> isMultiplayerButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
 
     @NonNull
-    public LiveData<Boolean> getSingleplayerButtonClickedState() {
+    public LiveData<StateChangedCallback.State<Void>> getSingleplayerButtonClickedState() {
         return isSingleplayerButtonClickedMutableState;
     }
 
     public void onSingleplayerButtonClicked() {
-        isSingleplayerButtonClickedMutableState.postValue(true);
+        isSingleplayerButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onSingleplayerButtonClickedFinished() {
-        isSingleplayerButtonClickedMutableState.postValue(false);
+        isSingleplayerButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 
     @NonNull
-    public LiveData<Boolean> getMultiplayerButtonClickedState() {
+    public LiveData<StateChangedCallback.State<Void>> getMultiplayerButtonClickedState() {
         return isMultiplayerButtonClickedMutableState;
     }
 
     public void onMultiplayerButtonClicked() {
-        isMultiplayerButtonClickedMutableState.postValue(true);
+        isMultiplayerButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onMultiplayerButtonClickedFinished() {
-        isMultiplayerButtonClickedMutableState.postValue(false);
+        isMultiplayerButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 }

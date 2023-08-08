@@ -15,12 +15,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.databinding.DialogInputHostBinding;
 import com.paranid5.tic_tac_toe.databinding.FragmentSelectGameRoomTypeBinding;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
+import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
@@ -28,7 +30,10 @@ import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerType;
 
 import java.util.Objects;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 
 @AndroidEntryPoint
 public final class SelectGameRoomTypeFragment extends Fragment implements UIStateChangesObserver, ReceiverManager {
@@ -53,6 +58,9 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     public static String GAME_HOST_KEY = "game_host";
 
     @NonNull
+    public static String PLAYER_ROLE_KEY = "player_role";
+
+    @NonNull
     private FragmentSelectGameRoomTypeBinding binding;
 
     @NonNull
@@ -61,30 +69,41 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     @Nullable
     private DialogInterface showGameHostDialog;
 
-    @NonNull
-    public PlayerRole[] getRoles() { return viewModel.presenter.roles; }
+    @Nullable
+    private DialogInterface gameHostInputDialog;
 
     @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler> createNewRoomButtonClickedCallback = handler -> {
+    @Inject
+    MutableLiveData<DisposableCompletableObserver> clientTaskState;
+
+    @NonNull
+    private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> createNewRoomButtonClickedCallback = (handler, t) -> {
         handler.onCreateNewRoomButtonClicked();
         viewModel.onCreateNewRoomButtonClickedFinished();
     };
 
     @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler> connectRoomButtonClickedCallback = handler -> {
+    private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> connectRoomButtonClickedCallback = (handler, t) -> {
         showGameHostInput();
         viewModel.onConnectRoomButtonClickedFinished();
     };
 
     @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler> gameCancelButtonClickedCallback = handler -> {
+    private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> gameCancelButtonClickedCallback = (handler, t) -> {
         handler.onGameCancelButtonClicked();
         viewModel.onGameCancelButtonClickedFinished();
     };
 
     @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler> gameStartReceivedCallback = handler -> {
-        handler.onGameStartReceived(getParentFragmentManager(), PlayerType.HOST, getRoles(), null);
+    private final StateChangedCallback<SelectGameRoomTypeUIHandler, PlayerRole> gameStartReceivedCallback = (handler, role) -> {
+        Objects.requireNonNull(role);
+
+        handler.onGameStartReceived(
+                getParentFragmentManager(),
+                PlayerType.HOST,
+                role
+        );
+
         viewModel.onGameStartReceivedFinished();
     };
 
@@ -104,9 +123,11 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private final BroadcastReceiver gameStartReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final @Nullable Context context, final @NonNull Intent intent) {
-            Log.d(TAG, "Game is started");
+            final PlayerRole role = PlayerRole.values()[intent.getIntExtra(PLAYER_ROLE_KEY, 0)];
+            Log.d(TAG, String.format("Game is started as %s", role));
+
             dismissShowGameHostDialog();
-            viewModel.onGameStartReceived();
+            viewModel.onGameStartReceived(role);
         }
     };
 
@@ -131,6 +152,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
         super.onDestroy();
         unregisterReceivers();
         dismissShowGameHostDialog();
+        dismissGameHostInputDialog();
     }
 
     @Override
@@ -173,24 +195,26 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     }
 
     private void dismissShowGameHostDialog() {
-        if (showGameHostDialog != null)
+        if (showGameHostDialog != null) {
             showGameHostDialog.dismiss();
-        showGameHostDialog = null;
+            showGameHostDialog = null;
+        }
     }
 
     private void showGameHostInput() {
         final DialogInputHostBinding dialogBinding = DialogInputHostBinding.inflate(getLayoutInflater());
 
-        new AlertDialog.Builder(requireContext())
+        gameHostInputDialog = new AlertDialog.Builder(requireContext())
                 .setCancelable(false)
                 .setTitle(R.string.host_ip)
                 .setView(dialogBinding.getRoot())
                 .setPositiveButton(
                         R.string.ok,
-                        (dialogInterface, i) -> viewModel.handler.onHostInputDone(
-                                getParentFragmentManager(),
-                                getRoles(),
-                                dialogBinding.hostInput.getText().toString()
+                        (dialogInterface, i) -> clientTaskState.postValue(
+                                ClientLauncher.launch(
+                                        dialogBinding.hostInput.getText().toString(),
+                                        viewModel.isGameStartReceivedMutableState
+                                )
                         )
                 )
                 .setNegativeButton(
@@ -198,5 +222,12 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
                         (dialogInterface, i) -> dialogInterface.dismiss()
                 )
                 .show();
+    }
+
+    private void dismissGameHostInputDialog() {
+        if (gameHostInputDialog != null) {
+            gameHostInputDialog.dismiss();
+            gameHostInputDialog = null;
+        }
     }
 }

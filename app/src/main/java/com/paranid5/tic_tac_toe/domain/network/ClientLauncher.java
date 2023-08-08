@@ -4,15 +4,21 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
+import androidx.lifecycle.MutableLiveData;
 
-import com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragmentViewModel;
+import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
+import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
@@ -22,7 +28,13 @@ public final class ClientLauncher {
     @NonNull
     private static final String TAG = ClientLauncher.class.getSimpleName();
 
-    private static final class RequestCallbackArgs {
+    public static final byte GAME_START = 0;
+
+    public static final byte CLIENT_TIME_TO_MOVE = 1;
+
+    public static final byte HOST_TIME_TO_MOVE = 2;
+
+    private static final class RequestCallbackArgs<T> {
         @NonNull
         public final SocketChannel client;
 
@@ -30,16 +42,16 @@ public final class ClientLauncher {
         public final byte[] body;
 
         @NonNull
-        public final GameFragmentViewModel viewModel;
+        public final MutableLiveData<StateChangedCallback.State<T>> viewModelActionState;
 
         public RequestCallbackArgs(
                 final @NonNull SocketChannel client,
                 final @NonNull byte[] body,
-                final @NonNull GameFragmentViewModel viewModel
+                final @NonNull MutableLiveData<StateChangedCallback.State<T>> viewModelAction
         ) {
             this.client = client;
             this.body = body;
-            this.viewModel = viewModel;
+            this.viewModelActionState = viewModelAction;
         }
     }
 
@@ -49,16 +61,17 @@ public final class ClientLauncher {
     @NonNull
     private static Map<Byte, Function<RequestCallbackArgs, Void>> buildRequestHandlers() {
         final Map<Byte, Function<RequestCallbackArgs, Void>> rh = new HashMap<>();
+        rh.put(GAME_START, ClientLauncher::onGameStartReceived);
         return rh;
     }
 
     @NonNull
     public static DisposableCompletableObserver launch(
             final @NonNull String host,
-            final @NonNull GameFragmentViewModel viewModel
+            final @NonNull MutableLiveData<StateChangedCallback.State<PlayerRole>> roleState
     ) {
         return Completable
-                .fromAction(() -> launchClient(host, viewModel))
+                .fromAction(() -> launchClient(host, roleState))
                 .subscribeOn(Schedulers.io())
                 .subscribeWith(disposableLaunchObserver());
     }
@@ -76,27 +89,73 @@ public final class ClientLauncher {
 
     private static void launchClient(
             final @NonNull String host,
-            final @NonNull GameFragmentViewModel viewModel
+            final @NonNull MutableLiveData<StateChangedCallback.State<PlayerRole>> roleToHostState
     ) throws IOException {
-        final SocketChannel client = SocketChannel.open(new InetSocketAddress(host, 8080));
-        final ByteBuffer requestBuf = ByteBuffer.allocate(1);
-        final ByteBuffer bodyBuf = ByteBuffer.allocate(1);
-        final ByteBuffer[] buffer = { requestBuf, bodyBuf };
+        final SocketChannel client = clientSocket(host);
+        final Selector selector = clientSelector(client);
+
+        Log.d(TAG, "Selector is configured");
+
+        final ByteBuffer buffer = ByteBuffer.allocate(32);
 
         Log.d(TAG, String.format("Connected to the game at %s", host));
 
         while (true) {
-            if (client.read(buffer) < 0) {
-                client.close();
-                return;
+            selector.select();
+
+            final Set<SelectionKey> keys = selector.selectedKeys();
+            final Iterator<SelectionKey> it = keys.iterator();
+
+            while (it.hasNext()) {
+                final SelectionKey key = it.next();
+
+                if (key.isReadable()) {
+                    Log.d(TAG, "Prepare to read");
+
+                    if (client.read(buffer) < 0) {
+                        Log.d(TAG, "Connection is lost");
+                        client.close();
+                        return;
+                    }
+
+                    final byte[] msg = buffer.array();
+                    final byte request = msg[0];
+                    final byte[] body = parseBody(msg);
+
+                    requestHandlers.get(request).apply(
+                            new RequestCallbackArgs<>(client, body, roleToHostState)
+                    );
+                }
+
+                it.remove();
             }
-
-            final byte request = requestBuf.array()[0];
-            final byte[] body = bodyBuf.array();
-
-            requestHandlers.get(request).apply(
-                    new RequestCallbackArgs(client, body, viewModel)
-            );
         }
+    }
+
+    @NonNull
+    private static SocketChannel clientSocket(final @NonNull String host) throws IOException {
+        final SocketChannel client = SocketChannel.open(new InetSocketAddress(host, 8080));
+        client.configureBlocking(false);
+        return client;
+    }
+
+    private static Selector clientSelector(final @NonNull SocketChannel client) throws IOException {
+        final Selector selector = Selector.open();
+        client.register(selector, SelectionKey.OP_READ);
+        return selector;
+    }
+
+    @NonNull
+    private static byte[] parseBody(final @NonNull byte[] msg) {
+        final byte[] body = new byte[msg.length - 1];
+        System.arraycopy(msg, 1, body, 0, body.length);
+        return body;
+    }
+
+    private static Void onGameStartReceived(final @NonNull RequestCallbackArgs<PlayerRole> args) {
+        final PlayerRole role = PlayerRole.values()[args.body[0]];
+        Log.d(TAG, String.format("Game is started as %s", role));
+        args.viewModelActionState.postValue(new StateChangedCallback.State<>(true, role));
+        return null;
     }
 }

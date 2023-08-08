@@ -10,10 +10,15 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ServerLauncher;
+import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -42,6 +47,9 @@ public final class GameService extends Service implements ReceiverManager {
 
     @Nullable
     private Disposable serverTask;
+
+    @NonNull
+    private final MutableLiveData<PlayerRole[]> rolesState = new MutableLiveData<>(null);
 
     @NonNull
     private final BroadcastReceiver stopServerReceiver = new BroadcastReceiver() {
@@ -106,7 +114,10 @@ public final class GameService extends Service implements ReceiverManager {
                     ServerLauncher.sendHost(this, host);
                     return host;
                 })
-                .flatMapCompletable((host) -> ServerLauncher.launch(this, host))
+                .flatMapCompletable((host) -> {
+                    rolesState.postValue(generateRoles());
+                    return ServerLauncher.launch(this, host, rolesState);
+                })
                 .subscribeWith(disposableLaunchObserver());
     }
 
@@ -125,5 +136,13 @@ public final class GameService extends Service implements ReceiverManager {
         if (serverTask != null)
             serverTask.dispose();
         serverTask = null;
+    }
+
+    @NonNull
+    private PlayerRole[] generateRoles() {
+        final List<PlayerRole> roles = new ArrayList<>(2);
+        roles.add(PlayerRole.ZERO); roles.add(PlayerRole.CROSS);
+        Collections.shuffle(roles);
+        return roles.toArray(new PlayerRole[0]);
     }
 }

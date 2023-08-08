@@ -28,13 +28,13 @@ public final class SelectGameTypeFragment extends Fragment implements UIStateCha
     private SelectGameTypeViewModel viewModel;
 
     @NonNull
-    private final StateChangedCallback<SelectGameTypeUIHandler> singleplayerButtonClickedCallback = handler -> {
+    private final StateChangedCallback<SelectGameTypeUIHandler, Void> singleplayerButtonClickedCallback = (handler, t) -> {
         handler.onSingleplayerButtonClicked(requireContext());
         viewModel.onSingleplayerButtonClickedFinished();
     };
 
     @NonNull
-    private final StateChangedCallback<SelectGameTypeUIHandler> multiplayerButtonClickedCallback = handler -> {
+    private final StateChangedCallback<SelectGameTypeUIHandler, Void> multiplayerButtonClickedCallback = (handler, t) -> {
         handler.onMultiplayerButtonClicked(getParentFragmentManager());
         viewModel.onMultiplayerButtonClickedFinished();
     };

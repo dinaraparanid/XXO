@@ -28,13 +28,13 @@ public final class MainFragment extends Fragment implements UIStateChangesObserv
     private MainFragmentViewModel viewModel;
 
     @NonNull
-    private final StateChangedCallback<MainFragmentUIHandler> playButtonClickedCallback = handler -> {
+    private final StateChangedCallback<MainFragmentUIHandler, Void> playButtonClickedCallback = (handler, t) -> {
         handler.onPlayButtonClicked(getParentFragmentManager());
         viewModel.onPlayButtonClickedFinished();
     };
 
     @NonNull
-    private final StateChangedCallback<MainFragmentUIHandler> settingsButtonClickedCallback = handler -> {
+    private final StateChangedCallback<MainFragmentUIHandler, Void> settingsButtonClickedCallback = (handler, t) -> {
         handler.onSettingsButtonClicked(requireContext());
         viewModel.onSettingsButtonClickedFinished();
     };

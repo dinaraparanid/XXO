@@ -3,9 +3,9 @@ package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.SavedStateHandle;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
+import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
 import javax.inject.Inject;
@@ -15,9 +15,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public final class SelectGameRoomTypeViewModel extends ObservableViewModel<SelectGameRoomTypePresenter, SelectGameRoomTypeUIHandler> {
     @NonNull
-    private static final String ROLES_KEY = "roles";
-
-    @NonNull
     final SelectGameRoomTypePresenter presenter;
 
     @NonNull
@@ -25,15 +22,10 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
 
     @Inject
     public SelectGameRoomTypeViewModel(
-            final @NonNull SelectGameRoomTypeUIHandler handler,
-            final @NonNull SavedStateHandle savedStateHandle
+            final @NonNull SelectGameRoomTypePresenter presenter,
+            final @NonNull SelectGameRoomTypeUIHandler handler
     ) {
-        final PlayerRole[] roles = savedStateHandle.get(ROLES_KEY);
-
-        this.presenter = roles != null
-                ? new SelectGameRoomTypePresenter(roles)
-                : new SelectGameRoomTypePresenter();
-
+        this.presenter = presenter;
         this.handler = handler;
     }
 
@@ -50,66 +42,86 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
     }
 
     @NonNull
-    private final MutableLiveData<Boolean> isCreateNewRoomButtonClickedMutableState = new MutableLiveData<>(false);
+    private final MutableLiveData<StateChangedCallback.State<Void>> isCreateNewRoomButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
 
     @NonNull
-    private final MutableLiveData<Boolean> isConnectRoomButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @NonNull
-    private final MutableLiveData<Boolean> isGameCancelButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @NonNull
-    private final MutableLiveData<Boolean> isGameStartReceivedMutableState = new MutableLiveData<>(false);
-
-    @NonNull
-    public LiveData<Boolean> getCreateNewRoomButtonClickedState() {
+    public LiveData<StateChangedCallback.State<Void>> getCreateNewRoomButtonClickedState() {
         return isCreateNewRoomButtonClickedMutableState;
     }
 
     public void onCreateNewRoomButtonClicked() {
-        isCreateNewRoomButtonClickedMutableState.postValue(true);
+        isCreateNewRoomButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onCreateNewRoomButtonClickedFinished() {
-        isCreateNewRoomButtonClickedMutableState.postValue(false);
+        isCreateNewRoomButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 
     @NonNull
-    public LiveData<Boolean> getConnectRoomButtonClickedState() {
+    private final MutableLiveData<StateChangedCallback.State<Void>> isConnectRoomButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
+
+    @NonNull
+    public LiveData<StateChangedCallback.State<Void>> getConnectRoomButtonClickedState() {
         return isConnectRoomButtonClickedMutableState;
     }
 
     public void onConnectRoomButtonClicked() {
-        isConnectRoomButtonClickedMutableState.postValue(true);
+        isConnectRoomButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onConnectRoomButtonClickedFinished() {
-        isConnectRoomButtonClickedMutableState.postValue(false);
+        isConnectRoomButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 
     @NonNull
-    public LiveData<Boolean> getGameCancelButtonClickedState() {
+    private final MutableLiveData<StateChangedCallback.State<Void>> isGameCancelButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
+
+    @NonNull
+    public LiveData<StateChangedCallback.State<Void>> getGameCancelButtonClickedState() {
         return isGameCancelButtonClickedMutableState;
     }
 
     public void onGameCancelButtonClicked() {
-        isGameCancelButtonClickedMutableState.postValue(true);
+        isGameCancelButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onGameCancelButtonClickedFinished() {
-        isGameCancelButtonClickedMutableState.postValue(false);
+        isGameCancelButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 
     @NonNull
-    public LiveData<Boolean> getGameStartReceivedState() {
+    final MutableLiveData<StateChangedCallback.State<PlayerRole>> isGameStartReceivedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
+
+    @NonNull
+    public LiveData<StateChangedCallback.State<PlayerRole>> getGameStartReceivedState() {
         return isGameStartReceivedMutableState;
     }
 
-    public void onGameStartReceived() {
-        isGameStartReceivedMutableState.postValue(true);
+    public void onGameStartReceived(final @NonNull PlayerRole role) {
+        isGameStartReceivedMutableState.postValue(
+                new StateChangedCallback.State<>(true, role)
+        );
     }
 
     public void onGameStartReceivedFinished() {
-        isGameStartReceivedMutableState.postValue(false);
+        isGameStartReceivedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 }

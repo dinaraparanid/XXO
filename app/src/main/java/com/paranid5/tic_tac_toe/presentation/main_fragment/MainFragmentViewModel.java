@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
+import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 
 import javax.inject.Inject;
 
@@ -37,32 +38,44 @@ public final class MainFragmentViewModel extends ObservableViewModel<MainFragmen
     public MainFragmentUIHandler getHandler() { return handler; }
 
     @NonNull
-    private final MutableLiveData<Boolean> isPlayButtonClickedMutableState = new MutableLiveData<>(false);
+    private final MutableLiveData<StateChangedCallback.State<Void>> isPlayButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
 
     @NonNull
-    private final MutableLiveData<Boolean> isSettingsButtonClickedMutableState = new MutableLiveData<>(false);
-
-    @NonNull
-    public LiveData<Boolean> getPlayButtonClickedState() {
+    public LiveData<StateChangedCallback.State<Void>> getPlayButtonClickedState() {
         return isPlayButtonClickedMutableState;
     }
 
-    public void onPlayButtonClicked() { isPlayButtonClickedMutableState.postValue(true); }
+    public void onPlayButtonClicked() {
+        isPlayButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
+    }
 
     public void onPlayButtonClickedFinished() {
-        isPlayButtonClickedMutableState.postValue(false);
+        isPlayButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 
     @NonNull
-    public LiveData<Boolean> getSettingsButtonClickedState() {
+    private final MutableLiveData<StateChangedCallback.State<Void>> isSettingsButtonClickedMutableState =
+            new MutableLiveData<>(new StateChangedCallback.State<>());
+
+    @NonNull
+    public LiveData<StateChangedCallback.State<Void>> getSettingsButtonClickedState() {
         return isSettingsButtonClickedMutableState;
     }
 
     public void onSettingsButtonClicked() {
-        isSettingsButtonClickedMutableState.postValue(true);
+        isSettingsButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(true)
+        );
     }
 
     public void onSettingsButtonClickedFinished() {
-        isSettingsButtonClickedMutableState.postValue(false);
+        isSettingsButtonClickedMutableState.postValue(
+                new StateChangedCallback.State<>(false)
+        );
     }
 }
