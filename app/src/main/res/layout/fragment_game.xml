@@ -15,130 +15,130 @@
         android:background="@drawable/app_background">
 
         <carbon.widget.TextView
-            android:id="@+id/turn"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <carbon.widget.TextView
-            android:id="@+id/time_left"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/turn"
-            app:layout_constraintTop_toBottomOf="@+id/turn" />
+                android:id="@+id/turn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="10dp" />
 
         <carbon.widget.LinearLayout
-            android:id="@+id/game_table"
-            android:layout_width="300dp"
-            android:layout_height="500dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:divider="@drawable/cells_divider"
-            android:orientation="vertical"
-            android:showDividers="middle"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/time_left">
+                android:id="@+id/game_table"
+                android:layout_width="300dp"
+                android:layout_height="500dp"
+                android:layout_marginBottom="5dp"
+                android:divider="@drawable/cells_divider"
+                android:orientation="vertical"
+                android:showDividers="middle"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/turn">
 
             <carbon.widget.LinearLayout
-                android:id="@+id/first_line"
-                android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:divider="@drawable/cells_divider"
-                android:orientation="horizontal"
-                android:showDividers="middle">
+                    android:id="@+id/first_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_weight="1"
+                    android:divider="@drawable/cells_divider"
+                    android:orientation="horizontal"
+                    android:showDividers="middle">
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_1"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_1"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_2"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_2"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_3"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_3"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
             </carbon.widget.LinearLayout>
 
             <carbon.widget.LinearLayout
-                android:id="@+id/second_line"
-                android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:divider="@drawable/cells_divider"
-                android:orientation="horizontal"
-                android:showDividers="middle">
+                    android:id="@+id/second_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_weight="1"
+                    android:divider="@drawable/cells_divider"
+                    android:orientation="horizontal"
+                    android:showDividers="middle">
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_4"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_4"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_5"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_5"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_6"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_6"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
             </carbon.widget.LinearLayout>
 
             <carbon.widget.LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:divider="@drawable/cells_divider"
-                android:orientation="horizontal"
-                android:showDividers="middle">
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_weight="1"
+                    android:divider="@drawable/cells_divider"
+                    android:orientation="horizontal"
+                    android:showDividers="middle">
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_7"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_7"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_8"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_8"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
                 <carbon.widget.ImageView
-                    android:id="@+id/button_9"
-                    android:layout_width="20dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="fitCenter" />
+                        android:id="@+id/button_9"
+                        android:layout_width="20dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:enabled="@{view_model.presenter.moving}"/>
 
             </carbon.widget.LinearLayout>
 

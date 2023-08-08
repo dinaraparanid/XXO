@@ -30,9 +30,7 @@ public final class ClientLauncher {
 
     public static final byte GAME_START = 0;
 
-    public static final byte CLIENT_TIME_TO_MOVE = 1;
-
-    public static final byte HOST_TIME_TO_MOVE = 2;
+    public static final byte HOST_MOVED = 1;
 
     private static final class RequestCallbackArgs<T> {
         @NonNull

@@ -1,7 +1,12 @@
 package com.paranid5.tic_tac_toe.presentation.game_fragment;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
 
+import com.paranid5.tic_tac_toe.di.GameFragmentPresenterFactory;
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
 
 import javax.inject.Inject;
@@ -11,17 +16,34 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 @HiltViewModel
 public final class GameFragmentViewModel extends ObservableViewModel<GameFragmentPresenter, GameFragmentUIHandler> {
     @NonNull
-    final GameFragmentPresenter presenter;
+    private static final String PLAYER_TYPE = "player_type";
 
     @NonNull
-    final GameFragmentUIHandler handler;
+    private static final String PLAYER_ROLE = "player_role";
+
+    @NonNull
+    private static final String CURRENT_MOVING_PLAYER_STATE = "cur_mov_player_state";
+
+    @NonNull
+    private final GameFragmentPresenter presenter;
+
+    @NonNull
+    private final GameFragmentUIHandler handler;
+
+    @Inject
+    GameFragmentPresenterFactory presenterFactory;
 
     @Inject
     public GameFragmentViewModel(
-            final @NonNull GameFragmentPresenter presenter,
-            final @NonNull GameFragmentUIHandler handler
+            final @NonNull GameFragmentUIHandler handler,
+            final @NonNull SavedStateHandle savedStateHandle
     ) {
-        this.presenter = presenter;
+        final MutableLiveData<PlayerType> type = savedStateHandle.getLiveData(PLAYER_TYPE, null);
+        final MutableLiveData<PlayerRole> role = savedStateHandle.getLiveData(PLAYER_ROLE, null);
+        final MutableLiveData<PlayerRole> currentMovingPlayerState =
+                savedStateHandle.getLiveData(CURRENT_MOVING_PLAYER_STATE, PlayerRole.CROSS);
+
+        this.presenter = presenterFactory.create(type, role, currentMovingPlayerState);
         this.handler = handler;
     }
 
@@ -32,4 +54,38 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     @NonNull
     @Override
     public GameFragmentUIHandler getHandler() { return handler; }
+
+    @NonNull
+    public LiveData<PlayerType> getPlayerTypeState() { return presenter.typeState; }
+
+    @Nullable
+    public PlayerType getPlayerType() { return getPlayerTypeState().getValue(); }
+
+    public void postPlayerType(final @NonNull PlayerType playerType) {
+        presenter.typeState.postValue(playerType);
+    }
+
+    @NonNull
+    public LiveData<PlayerRole> getPlayerRoleState() { return presenter.roleState; }
+
+    @Nullable
+    public PlayerRole getPlayerRole() { return getPlayerRoleState().getValue(); }
+
+    public void postPlayerRole(final @NonNull PlayerRole playerRole) {
+        presenter.roleState.postValue(playerRole);
+    }
+
+    @NonNull
+    public LiveData<PlayerRole> getCurrentMovingPlayerState() {
+        return presenter.currentMovingPlayerState;
+    }
+
+    @Nullable
+    public PlayerRole getCurrentMovingPlayer() {
+        return getCurrentMovingPlayerState().getValue();
+    }
+
+    public void postCurrentMovingPlayer(final @NonNull PlayerRole currentMovingPlayer) {
+        presenter.currentMovingPlayerState.postValue(currentMovingPlayer);
+    }
 }

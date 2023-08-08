@@ -39,12 +39,6 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     private GameFragmentViewModel viewModel;
 
     @NonNull
-    private PlayerType playerType;
-
-    @NonNull
-    private PlayerRole playerRole;
-
-    @NonNull
     @Inject
     MutableLiveData<DisposableCompletableObserver> clientTaskState;
 
@@ -75,11 +69,14 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             final @Nullable ViewGroup container,
             final @Nullable Bundle savedInstanceState
     ) {
-        playerType = PlayerType.values()[requireArguments().getInt(PLAYER_TYPE)];
-        playerRole = PlayerRole.values()[requireArguments().getInt(PLAYER_ROLE)];
+        final PlayerType type = PlayerType.values()[requireArguments().getInt(PLAYER_TYPE)];
+        final PlayerRole role = PlayerRole.values()[requireArguments().getInt(PLAYER_ROLE)];
+
+        viewModel = new ViewModelProvider(this).get(GameFragmentViewModel.class);
+        viewModel.postPlayerType(type);
+        viewModel.postPlayerRole(role);
 
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_game, container, false);
-        viewModel = new ViewModelProvider(this).get(GameFragmentViewModel.class);
         binding.setViewModel(viewModel);
 
         observeUIStateChanges();
