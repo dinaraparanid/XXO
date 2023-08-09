@@ -12,7 +12,7 @@ import androidx.core.util.Pair;
 import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.domain.utils.extensions.ListExt;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment.SelectGameRoomTypeFragment;
 
 import java.io.IOException;

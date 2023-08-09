@@ -4,10 +4,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
+import androidx.core.util.Pair;
 import androidx.lifecycle.MutableLiveData;
 
+import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -66,7 +68,7 @@ public final class ClientLauncher {
     @NonNull
     public static DisposableCompletableObserver launch(
             final @NonNull String host,
-            final @NonNull MutableLiveData<StateChangedCallback.State<PlayerRole>> roleState
+            final @NonNull MutableLiveData<StateChangedCallback.State<Pair<PlayerType, PlayerRole>>> roleState
     ) {
         return Completable
                 .fromAction(() -> launchClient(host, roleState))
@@ -87,7 +89,7 @@ public final class ClientLauncher {
 
     private static void launchClient(
             final @NonNull String host,
-            final @NonNull MutableLiveData<StateChangedCallback.State<PlayerRole>> roleToHostState
+            final @NonNull MutableLiveData<StateChangedCallback.State<Pair<PlayerType, PlayerRole>>> roleToHostState
     ) throws IOException {
         final SocketChannel client = clientSocket(host);
         final Selector selector = clientSelector(client);
@@ -150,10 +152,14 @@ public final class ClientLauncher {
         return body;
     }
 
-    private static Void onGameStartReceived(final @NonNull RequestCallbackArgs<PlayerRole> args) {
+    private static Void onGameStartReceived(final @NonNull RequestCallbackArgs<Pair<PlayerType, PlayerRole>> args) {
         final PlayerRole role = PlayerRole.values()[args.body[0]];
         Log.d(TAG, String.format("Game is started as %s", role));
-        args.viewModelActionState.postValue(new StateChangedCallback.State<>(true, role));
+
+        args.viewModelActionState.postValue(
+                new StateChangedCallback.State<>(true, new Pair<>(PlayerType.CLIENT, role))
+        );
+
         return null;
     }
 }

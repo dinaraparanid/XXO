@@ -1,6 +1,7 @@
 package com.paranid5.tic_tac_toe.presentation.game_fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.paranid5.tic_tac_toe.R;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.databinding.FragmentGameBinding;
+import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 
 import javax.inject.Inject;
@@ -45,6 +49,12 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @Nullable
     private DisposableCompletableObserver getClientTask() { return clientTaskState.getValue(); }
 
+    @NonNull
+    private final StateChangedCallback<GameFragmentUIHandler, Integer> cellClickedCallback = (handler, cellPos) -> {
+        handler.onCellClicked(cellPos, viewModel);
+        viewModel.onCellClickedFinished();
+    };
+
     GameFragment() {}
 
     @NonNull
@@ -72,9 +82,12 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         final PlayerType type = PlayerType.values()[requireArguments().getInt(PLAYER_TYPE)];
         final PlayerRole role = PlayerRole.values()[requireArguments().getInt(PLAYER_ROLE)];
 
+        Log.d(TAG, String.format("Start game as %s %s", type, role));
+
         viewModel = new ViewModelProvider(this).get(GameFragmentViewModel.class);
         viewModel.postPlayerType(type);
         viewModel.postPlayerRole(role);
+        viewModel.startStatesObserving(this);
 
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_game, container, false);
         binding.setViewModel(viewModel);
@@ -91,7 +104,7 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
     @Override
     public void observeUIStateChanges() {
-        // TODO: Cells clicks
+        cellClickedCallback.observe(this, viewModel.getCellClickedState(), viewModel.handler);
     }
 
     private void stopClient() {

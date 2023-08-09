@@ -12,14 +12,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 
+import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ServerLauncher;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
@@ -140,9 +140,9 @@ public final class GameService extends Service implements ReceiverManager {
 
     @NonNull
     private PlayerRole[] generateRoles() {
-        final List<PlayerRole> roles = new ArrayList<>(2);
-        roles.add(PlayerRole.ZERO); roles.add(PlayerRole.CROSS);
-        Collections.shuffle(roles);
-        return roles.toArray(new PlayerRole[0]);
+        final PlayerRole[] roles = PlayerRole.values();
+        final int hostRole = new Random().nextInt() % 2;
+        final int clientRole = (hostRole + 1) % 2;
+        return new PlayerRole[] { roles[hostRole], roles[clientRole] };
     }
 }

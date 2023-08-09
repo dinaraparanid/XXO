@@ -19,11 +19,24 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:fontFamily="@font/pristina"
+                android:text="@{view_model.presenter.turnMessage}"
+                android:textColor="@color/red_dinaraparanid"
+                android:textSize="40sp"
+                android:layout_marginTop="10dp"
+                app:carbon_cornerRadius="10dp"
+                app:carbon_elevation="0dp"
+                app:carbon_elevationAmbientShadowColor="@android:color/transparent"
+                app:carbon_elevationShadowColor="@android:color/transparent"
+                app:carbon_elevationSpotShadowColor="@android:color/transparent"
+                app:carbon_font="@font/pristina"
+                app:carbon_rippleColor="@color/red_light_dinaraparanid"
+                app:carbon_rippleStyle="over"
+                app:carbon_tint="@color/red_dinaraparanid"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginTop="10dp" />
+                app:layout_constraintTop_toTopOf="parent"/>
 
         <carbon.widget.LinearLayout
                 android:id="@+id/game_table"
@@ -53,7 +66,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[0]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(0)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_2"
@@ -61,7 +76,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[1]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(1)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_3"
@@ -69,7 +86,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[2]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(2)}"/>
 
             </carbon.widget.LinearLayout>
 
@@ -88,7 +107,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[3]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(3)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_5"
@@ -96,7 +117,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[4]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(4)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_6"
@@ -104,7 +127,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[5]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(5)}"/>
 
             </carbon.widget.LinearLayout>
 
@@ -122,7 +147,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[6]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(6)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_8"
@@ -130,7 +157,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[7]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(7)}"/>
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_9"
@@ -138,7 +167,9 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"/>
+                        android:enabled="@{view_model.presenter.moving}"
+                        android:src="@{view_model.presenter.cellsPictures[8]}"
+                        android:onClickListener="@{() -> view_model.onCellClicked(8)}"/>
 
             </carbon.widget.LinearLayout>
 

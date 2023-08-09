@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.util.Pair;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
@@ -25,8 +26,8 @@ import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerType;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
 
 import java.util.Objects;
 
@@ -95,13 +96,13 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     };
 
     @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler, PlayerRole> gameStartReceivedCallback = (handler, role) -> {
-        Objects.requireNonNull(role);
+    private final StateChangedCallback<SelectGameRoomTypeUIHandler, Pair<PlayerType, PlayerRole>> gameStartReceivedCallback = (handler, typeToRole) -> {
+        Objects.requireNonNull(typeToRole);
 
         handler.onGameStartReceived(
                 getParentFragmentManager(),
-                PlayerType.HOST,
-                role
+                typeToRole.first,
+                typeToRole.second
         );
 
         viewModel.onGameStartReceivedFinished();
@@ -127,7 +128,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
             Log.d(TAG, String.format("Game is started as %s", role));
 
             dismissShowGameHostDialog();
-            viewModel.onGameStartReceived(role);
+            viewModel.onGameStartReceived(PlayerType.HOST, role);
         }
     };
 

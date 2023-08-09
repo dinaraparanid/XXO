@@ -7,8 +7,8 @@ import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.domain.game_service.GameServiceAccessor;
 import com.paranid5.tic_tac_toe.presentation.UIHandler;
 import com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragment;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerType;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

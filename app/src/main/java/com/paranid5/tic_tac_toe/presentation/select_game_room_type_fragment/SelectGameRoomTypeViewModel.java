@@ -1,12 +1,14 @@
 package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.presentation.ObservableViewModel;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
 
 import javax.inject.Inject;
 
@@ -105,17 +107,20 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
     }
 
     @NonNull
-    final MutableLiveData<StateChangedCallback.State<PlayerRole>> isGameStartReceivedMutableState =
+    final MutableLiveData<StateChangedCallback.State<Pair<PlayerType, PlayerRole>>> isGameStartReceivedMutableState =
             new MutableLiveData<>(new StateChangedCallback.State<>());
 
     @NonNull
-    public LiveData<StateChangedCallback.State<PlayerRole>> getGameStartReceivedState() {
+    public LiveData<StateChangedCallback.State<Pair<PlayerType, PlayerRole>>> getGameStartReceivedState() {
         return isGameStartReceivedMutableState;
     }
 
-    public void onGameStartReceived(final @NonNull PlayerRole role) {
+    public void onGameStartReceived(
+            final @NonNull PlayerType playerType,
+            final @NonNull PlayerRole role
+    ) {
         isGameStartReceivedMutableState.postValue(
-                new StateChangedCallback.State<>(true, role)
+                new StateChangedCallback.State<>(true, new Pair<>(playerType, role))
         );
     }
 
