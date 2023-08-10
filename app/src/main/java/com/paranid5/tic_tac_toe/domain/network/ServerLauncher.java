@@ -8,11 +8,12 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.arch.core.util.Function;
-import androidx.core.util.Pair;
 import androidx.lifecycle.MutableLiveData;
 
-import com.paranid5.tic_tac_toe.domain.utils.extensions.ListExt;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
+import com.paranid5.tic_tac_toe.domain.utils.extensions.ListExt;
+import com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragment;
 import com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment.SelectGameRoomTypeFragment;
 
 import java.io.IOException;
@@ -31,7 +32,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
+
+import dagger.hilt.EntryPoint;
+import dagger.hilt.InstallIn;
+import dagger.hilt.android.EntryPointAccessors;
+import dagger.hilt.components.SingletonComponent;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -43,12 +49,20 @@ public final class ServerLauncher {
 
     public static final byte CLIENT_MOVED = 0;
 
-    @NonNull
-    private static final Map<Byte, Function<Pair<SocketChannel, byte[]>, Void>> requestHandlers = buildRequestHandlers();
+    @EntryPoint
+    @InstallIn(SingletonComponent.class)
+    interface ServerLauncherEntryPoint {
+        MutableLiveData<SocketChannel> serverClientState();
+        MutableLiveData<String> hostState();
+    }
 
     @NonNull
-    private static Map<Byte, Function<Pair<SocketChannel, byte[]>, Void>> buildRequestHandlers() {
-        final Map<Byte, Function<Pair<SocketChannel, byte[]>, Void>> rh = new HashMap<>();
+    private static final Map<Byte, Function<RequestCallbackArgs, Void>> requestHandlers = buildRequestHandlers();
+
+    @NonNull
+    private static Map<Byte, Function<RequestCallbackArgs, Void>> buildRequestHandlers() {
+        final Map<Byte, Function<RequestCallbackArgs, Void>> rh = new HashMap<>();
+        rh.put(CLIENT_MOVED, ServerLauncher::onClientMoved);
         return rh;
     }
 
@@ -60,47 +74,52 @@ public final class ServerLauncher {
     }
 
     @NonNull
-    public static Completable launch(
-            final @NonNull Context ctx,
-            final @NonNull String host,
-            final @NonNull MutableLiveData<PlayerRole[]> rolesState
-    ) {
+    public static Completable launch(final @NonNull Context ctx, final @NonNull String host) {
         return Completable
-                .fromAction(() -> launchServer(ctx, host, rolesState))
+                .fromRunnable(() -> {
+                    try {
+                        launchServer(ctx, host);
+                    } catch (final IOException e) {
+                        e.printStackTrace();
+                    }
+                })
                 .subscribeOn(Schedulers.io());
     }
 
     private static void launchServer(
             final @NonNull Context ctx,
-            final @NonNull String host,
-            final @NonNull MutableLiveData<PlayerRole[]> rolesState
+            final @NonNull String host
     ) throws IOException {
-        final ByteBuffer buffer = ByteBuffer.allocate(32);
+        final ByteBuffer buffer = ByteBuffer.allocate(8);
         Log.d(TAG, "Launching server");
 
-        try (
-                final ServerSocketChannel server = gameServer(host);
-                final Selector selector = serverSelector(server)
-        ) {
-            while (true) {
-                selector.select();
+        final ServerSocketChannel server = gameServer(host);
+        final Selector selector = serverSelector(server);
+        Log.d(TAG, String.format("Server is launched on %s", host));
 
-                final Set<SelectionKey> keys = selector.selectedKeys();
-                final Iterator<SelectionKey> it = keys.iterator();
+        while (true) {
+            selector.select();
 
-                while (it.hasNext()) {
-                    final SelectionKey key = it.next();
+            final Iterator<SelectionKey> it = selector.selectedKeys().iterator();
 
-                    if (key.isAcceptable()) {
-                        sendGameStart(ctx, rolesState, registerClient(server, selector), buffer);
-                        buffer.flip();
-                    } else if (key.isReadable()) {
-                        onClientRequestReceived((SocketChannel) key.channel(), buffer);
-                        buffer.flip();
-                    }
+            while (it.hasNext()) {
+                final SelectionKey key = it.next();
 
-                    it.remove();
+                if (key.isAcceptable()) {
+                    final SocketChannel client = registerClient(server, selector);
+                    postClientSocket(ctx, client);
+
+                    sendGameStart(ctx, client, buffer);
+                    buffer.flip();
+                } else if (key.isReadable()) {
+                    final SocketChannel client = (SocketChannel) key.channel();
+                    postClientSocket(ctx, client);
+
+                    onClientRequestReceived(client, buffer, ctx);
+                    buffer.flip();
                 }
+
+                it.remove();
             }
         }
     }
@@ -125,15 +144,19 @@ public final class ServerLauncher {
 
     @NonNull
     private static ServerSocketChannel gameServer(final @NonNull String host) throws IOException {
+        Log.d(TAG, "Prepare to run server");
         final ServerSocketChannel server = ServerSocketChannel.open();
+        Log.d(TAG, "Server socket is created");
         final InetSocketAddress addr = new InetSocketAddress(host, 8080);
         server.socket().bind(addr);
+        Log.d(TAG, String.format("Server is binded to %s", addr));
         server.configureBlocking(false);
+        Log.d(TAG, "Server is non blocking");
         return server;
     }
 
     public static void sendHost(final @NonNull Context ctx, final @NonNull String host) {
-        Log.d(TAG, String.format("Server is launched on %s", host));
+        Log.d(TAG, String.format("Server will launch on %s", host));
 
         ctx.sendBroadcast(
                 new Intent(SelectGameRoomTypeFragment.Broadcast_GAME_HOST)
@@ -143,8 +166,10 @@ public final class ServerLauncher {
 
     @NonNull
     private static Selector serverSelector(final @NonNull ServerSocketChannel server) throws IOException {
+        Log.d(TAG, "Creating selector");
         final Selector selector = Selector.open();
         server.register(selector, SelectionKey.OP_ACCEPT);
+        Log.d(TAG, "Selector is configured");
         return selector;
     }
 
@@ -160,23 +185,47 @@ public final class ServerLauncher {
         return client;
     }
 
+    @Nullable
+    private static String getHost(final @NonNull Context ctx) {
+        return EntryPointAccessors
+                .fromApplication(
+                        ctx.getApplicationContext(),
+                        ServerLauncherEntryPoint.class
+                )
+                .hostState()
+                .getValue();
+    }
+
+    private static void postHost(
+            final @NonNull Context ctx,
+            final @NonNull String host
+    ) {
+        EntryPointAccessors
+                .fromApplication(
+                        ctx.getApplicationContext(),
+                        ServerLauncherEntryPoint.class
+                )
+                .hostState()
+                .postValue(host);
+    }
+
     private static void sendGameStart(
             final @NonNull Context context,
-            final @NonNull MutableLiveData<PlayerRole[]> rolesState,
             final @NonNull SocketChannel client,
             final @NonNull ByteBuffer buffer
     ) throws IOException {
         Log.d(TAG, "Sending game start to host");
 
         final PlayerRole[] roles = generateRoles();
-        rolesState.postValue(roles);
+        Log.d(TAG, String.format("Generated roles: %s", Arrays.toString(roles)));
 
         context.sendBroadcast(
                 new Intent(SelectGameRoomTypeFragment.Broadcast_GAME_START)
+                        .putExtra(SelectGameRoomTypeFragment.PLAYER_TYPE_KEY, PlayerType.HOST.ordinal())
                         .putExtra(SelectGameRoomTypeFragment.PLAYER_ROLE_KEY, roles[0].ordinal())
         );
 
-        sendRequest(
+        sendClientRequest(
                 client,
                 buffer,
                 ClientLauncher.GAME_START,
@@ -188,37 +237,44 @@ public final class ServerLauncher {
 
     private static void onClientRequestReceived(
             final @NonNull SocketChannel client,
-            final @NonNull ByteBuffer buffer
+            final @NonNull ByteBuffer buffer,
+            final @NonNull Context context
     ) throws IOException {
+        buffer.clear();
+
         if (client.read(buffer) < 0) {
             Log.d(TAG, "Connection with client is lost");
-            client.close();
+            //client.close();
             return;
         }
 
         final byte[] msg = buffer.array();
         final byte request = msg[0];
         final byte[] body = parseBody(msg);
-        buffer.flip();
 
-        Log.d(TAG, String.format("Request %s is received", request));
-        requestHandlers.get(request).apply(new Pair<>(client, body));
+        Log.d(TAG, String.format("Request %s is received: %s", request, Arrays.toString(body)));
+        requestHandlers.get(request).apply(new RequestCallbackArgs(null, client, body, context));
     }
 
-    private static void sendRequest(
+    private static void sendClientRequest(
             final @NonNull SocketChannel client,
             final @NonNull ByteBuffer buffer,
             final byte request,
             final @NonNull byte[] body
     ) throws IOException {
-        Log.d(TAG, String.format("Sending request %s: %s", request, Arrays.toString(body)));
+        Log.d(TAG, String.format("Sending client request %s: %s", request, Arrays.toString(body)));
 
+        buffer.clear();
         buffer.put(request);
         buffer.put(body);
+        buffer.flip();
 
-        Log.d(TAG, "Prepare to write");
-        final long bytes = client.write(buffer);
-        Log.d(TAG, String.format("Sent request %s; bytes: %s", request, bytes));
+        Log.d(TAG, String.format("Prepare to write %d bytes as %s", buffer.remaining(), Arrays.toString(buffer.array())));
+
+        while (buffer.hasRemaining()) {
+            final long bytes = client.write(buffer);
+            Log.d(TAG, String.format("Sent request %s; bytes: %s", request, bytes));
+        }
     }
 
     @NonNull
@@ -233,5 +289,53 @@ public final class ServerLauncher {
         final List<PlayerRole> roles = ListExt.mutableListOf(PlayerRole.CROSS, PlayerRole.ZERO);
         Collections.shuffle(roles);
         return roles.toArray(new PlayerRole[0]);
+    }
+
+    private static Void onClientMoved(final @NonNull RequestCallbackArgs args) {
+        final byte cellPos = args.body[0];
+
+        args.context.sendBroadcast(
+                new Intent(GameFragment.Broadcast_PLAYER_MOVED)
+                        .putExtra(GameFragment.PLAYER_TYPE, PlayerType.CLIENT.ordinal())
+                        .putExtra(GameFragment.CELL_KEY, cellPos)
+        );
+
+        return null;
+    }
+
+    public static void sendHostMoved(
+            final @NonNull Context context,
+            final byte cellPosition
+    ) throws IOException {
+        sendClientRequest(
+                Objects.requireNonNull(serverClientSocket(context)),
+                ByteBuffer.allocate(8),
+                ClientLauncher.HOST_MOVED,
+                new byte[] { cellPosition }
+        );
+    }
+
+    @Nullable
+    private static SocketChannel serverClientSocket(final @NonNull Context ctx) {
+        return EntryPointAccessors
+                .fromApplication(
+                        ctx,
+                        ServerLauncherEntryPoint.class
+                )
+                .serverClientState()
+                .getValue();
+    }
+
+    private static void postClientSocket(
+            final @NonNull Context ctx,
+            final @Nullable SocketChannel client
+    ) {
+        EntryPointAccessors
+                .fromApplication(
+                        ctx,
+                        ServerLauncherEntryPoint.class
+                )
+                .serverClientState()
+                .postValue(client);
     }
 }

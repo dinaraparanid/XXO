@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -16,11 +15,11 @@ import androidx.lifecycle.MutableLiveData;
 import com.paranid5.tic_tac_toe.BR;
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
-import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.data.utils.extensions.LiveDataExt;
 import com.paranid5.tic_tac_toe.presentation.ObservablePresenter;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -31,27 +30,27 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     private final Context context;
 
     @NonNull
-    public MutableLiveData<PlayerType> typeState;
+    public MutableLiveData<Integer> typeState;
 
     @NonNull
-    public MutableLiveData<PlayerRole> roleState;
+    public MutableLiveData<Integer> roleState;
 
     @NonNull
-    public MutableLiveData<PlayerRole> currentMovingPlayerState;
+    public MutableLiveData<Integer> currentMovingPlayerState;
 
     @NonNull
     public LiveData<Boolean> isMovingState;
 
     @NonNull
-    public MutableLiveData<PlayerRole[]> cellsState;
+    public MutableLiveData<Integer[]> cellsState;
 
     @AssistedInject
     public GameFragmentPresenter(
             final @ApplicationContext @NonNull Context context,
-            final @Assisted @NonNull MutableLiveData<PlayerType> typeState,
-            final @Assisted("role") @NonNull MutableLiveData<PlayerRole> roleState,
-            final @Assisted("cur_mov") @NonNull MutableLiveData<PlayerRole> currentMovingPlayerState,
-            final @Assisted @NonNull MutableLiveData<PlayerRole[]> cellsState
+            final @Assisted("type") @NonNull MutableLiveData<Integer> typeState,
+            final @Assisted("role") @NonNull MutableLiveData<Integer> roleState,
+            final @Assisted("cur_mov") @NonNull MutableLiveData<Integer> currentMovingPlayerState,
+            final @Assisted @NonNull MutableLiveData<Integer[]> cellsState
     ) {
         this.context = context;
         this.typeState = typeState;
@@ -63,7 +62,7 @@ public final class GameFragmentPresenter extends ObservablePresenter {
                 roleState,
                 currentMovingPlayerState,
                 false,
-                (role, movingPlayer) -> role == movingPlayer
+                Objects::equals
         );
     }
 
@@ -79,13 +78,15 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     @Bindable
     @NonNull
     public Drawable[] getCellsPictures() {
-        final PlayerRole[] cells = cellsState.getValue();
+        final Integer[] cells = cellsState.getValue();
         final Drawable[] cellPics = new Drawable[cells.length];
 
         Log.d("CellImages", Arrays.toString(cells));
 
-        for (int i = 0; i < cells.length; ++i)
-            cellPics[i] = getCellPicture(cells[i]);
+        for (int i = 0; i < cells.length; ++i) {
+            final Integer cell = cells[i];
+            cellPics[i] = getCellPicture(cell != null ? PlayerRole.values()[cell] : null);
+        }
 
         return cellPics;
     }

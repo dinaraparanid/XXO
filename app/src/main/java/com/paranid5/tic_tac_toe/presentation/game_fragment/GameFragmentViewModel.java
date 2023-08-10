@@ -48,17 +48,17 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     ) {
         this.savedStateHandle = savedStateHandle;
 
-        final MutableLiveData<PlayerType> type =
+        final MutableLiveData<Integer> type =
                 savedStateHandle.getLiveData(PLAYER_TYPE, null);
 
-        final MutableLiveData<PlayerRole> role =
+        final MutableLiveData<Integer> role =
                 savedStateHandle.getLiveData(PLAYER_ROLE, null);
 
-        final MutableLiveData<PlayerRole> currentMovingPlayerState =
-                savedStateHandle.getLiveData(CURRENT_MOVING_PLAYER, PlayerRole.CROSS);
+        final MutableLiveData<Integer> currentMovingPlayerState =
+                savedStateHandle.getLiveData(CURRENT_MOVING_PLAYER, PlayerRole.CROSS.ordinal());
 
-        final MutableLiveData<PlayerRole[]> cellsState =
-                savedStateHandle.getLiveData(CELLS, new PlayerRole[9]);
+        final MutableLiveData<Integer[]> cellsState =
+                savedStateHandle.getLiveData(CELLS, new Integer[9]);
 
         this.presenter = presenterFactory.create(type, role, currentMovingPlayerState, cellsState);
         this.handler = handler;
@@ -94,45 +94,54 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     }
 
     @NonNull
-    public LiveData<PlayerType> getPlayerTypeState() { return presenter.typeState; }
+    public LiveData<Integer> getPlayerTypeState() { return presenter.typeState; }
 
     @Nullable
-    public PlayerType getPlayerType() { return getPlayerTypeState().getValue(); }
+    public PlayerType getPlayerType() {
+        return PlayerType.values()[getPlayerTypeState().getValue()];
+    }
 
     public void postPlayerType(final @NonNull PlayerType playerType) {
-        presenter.typeState.postValue(playerType);
-        savedStateHandle.set(PLAYER_TYPE, playerType);
+        presenter.typeState.postValue(playerType.ordinal());
+        savedStateHandle.set(PLAYER_TYPE, playerType.ordinal());
     }
 
     @NonNull
-    public LiveData<PlayerRole> getPlayerRoleState() { return presenter.roleState; }
+    public LiveData<Integer> getPlayerRoleState() { return presenter.roleState; }
 
     @Nullable
-    public PlayerRole getPlayerRole() { return getPlayerRoleState().getValue(); }
+    public PlayerRole getPlayerRole() {
+        return PlayerRole.values()[getPlayerRoleState().getValue()];
+    }
 
     public void postPlayerRole(final @NonNull PlayerRole playerRole) {
-        presenter.roleState.postValue(playerRole);
-        savedStateHandle.set(PLAYER_ROLE, playerRole);
+        presenter.roleState.postValue(playerRole.ordinal());
+        savedStateHandle.set(PLAYER_ROLE, playerRole.ordinal());
     }
 
     @NonNull
-    public LiveData<PlayerRole> getCurrentMovingPlayerState() {
+    public LiveData<Integer> getCurrentMovingPlayerState() {
         return presenter.currentMovingPlayerState;
     }
 
     @Nullable
     public PlayerRole getCurrentMovingPlayer() {
-        return getCurrentMovingPlayerState().getValue();
+        return PlayerRole.values()[getCurrentMovingPlayerState().getValue()];
     }
 
     public void postCurrentMovingPlayer(final @NonNull PlayerRole currentMovingPlayer) {
-        presenter.currentMovingPlayerState.postValue(currentMovingPlayer);
-        savedStateHandle.set(CURRENT_MOVING_PLAYER, currentMovingPlayer);
+        presenter.currentMovingPlayerState.postValue(currentMovingPlayer.ordinal());
+        savedStateHandle.set(CURRENT_MOVING_PLAYER, currentMovingPlayer.ordinal());
     }
 
     @NonNull
-    public LiveData<PlayerRole[]> getCellsState() {
+    public LiveData<Integer[]> getCellsState() {
         return presenter.cellsState;
+    }
+
+    public void postCellsState(final @NonNull Integer[] cells) {
+        presenter.cellsState.postValue(cells);
+        savedStateHandle.set(CELLS, cells);
     }
 
     public void startStatesObserving(final @NonNull LifecycleOwner owner) {

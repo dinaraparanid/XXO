@@ -13,9 +13,9 @@ import dagger.assisted.AssistedFactory;
 @AssistedFactory
 public interface GameFragmentPresenterFactory {
     GameFragmentPresenter create(
-            final @NonNull MutableLiveData<PlayerType> typeState,
-            final @Assisted("role") @NonNull MutableLiveData<PlayerRole> roleState,
-            final @Assisted("cur_mov") @NonNull MutableLiveData<PlayerRole> currentMovingPlayerState,
-            final @NonNull MutableLiveData<PlayerRole[]> cellsState
+            final @Assisted("type") @NonNull MutableLiveData<Integer> typeState,
+            final @Assisted("role") @NonNull MutableLiveData<Integer> roleState,
+            final @Assisted("cur_mov") @NonNull MutableLiveData<Integer> currentMovingPlayerState,
+            final @NonNull MutableLiveData<Integer[]> cellsState
     );
 }

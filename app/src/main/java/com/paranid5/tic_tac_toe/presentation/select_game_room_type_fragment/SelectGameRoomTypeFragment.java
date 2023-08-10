@@ -20,15 +20,16 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.paranid5.tic_tac_toe.R;
+import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.databinding.DialogInputHostBinding;
 import com.paranid5.tic_tac_toe.databinding.FragmentSelectGameRoomTypeBinding;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
-import com.paranid5.tic_tac_toe.data.PlayerRole;
-import com.paranid5.tic_tac_toe.data.PlayerType;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -57,6 +58,9 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     @NonNull
     public static String GAME_HOST_KEY = "game_host";
+
+    @NonNull
+    public static String PLAYER_TYPE_KEY = "player_type";
 
     @NonNull
     public static String PLAYER_ROLE_KEY = "player_role";
@@ -124,11 +128,13 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private final BroadcastReceiver gameStartReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final @Nullable Context context, final @NonNull Intent intent) {
+            final PlayerType playerType = PlayerType.values()[intent.getIntExtra(PLAYER_TYPE_KEY, 0)];
             final PlayerRole role = PlayerRole.values()[intent.getIntExtra(PLAYER_ROLE_KEY, 0)];
             Log.d(TAG, String.format("Game is started as %s", role));
 
             dismissShowGameHostDialog();
-            viewModel.onGameStartReceived(PlayerType.HOST, role);
+            dismissGameHostInputDialog();
+            viewModel.onGameStartReceived(playerType, role);
         }
     };
 
@@ -211,18 +217,27 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
                 .setView(dialogBinding.getRoot())
                 .setPositiveButton(
                         R.string.ok,
-                        (dialogInterface, i) -> clientTaskState.postValue(
-                                ClientLauncher.launch(
-                                        dialogBinding.hostInput.getText().toString(),
-                                        viewModel.isGameStartReceivedMutableState
-                                )
-                        )
+                        (dialogInterface, i) -> {
+                            try {
+                                connectClientSocket(dialogBinding.hostInput.getText().toString());
+                            } catch (final IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            dialogInterface.dismiss();
+                        }
                 )
                 .setNegativeButton(
                         R.string.cancel,
                         (dialogInterface, i) -> dialogInterface.dismiss()
                 )
                 .show();
+    }
+
+    private void connectClientSocket(final @NonNull String host) throws IOException {
+        clientTaskState.postValue(
+                ClientLauncher.launch(host, requireContext())
+        );
     }
 
     private void dismissGameHostInputDialog() {

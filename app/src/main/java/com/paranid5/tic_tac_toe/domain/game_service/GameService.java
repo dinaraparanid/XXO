@@ -1,5 +1,6 @@
 package com.paranid5.tic_tac_toe.domain.game_service;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,18 +13,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 
-import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.di.NetworkModule;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ServerLauncher;
+import com.paranid5.tic_tac_toe.domain.utils.network.DefaultDisposableCompletable;
 
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Random;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
+@AndroidEntryPoint
 public final class GameService extends Service implements ReceiverManager {
     @NonNull
     private static final String TAG = GameService.class.getSimpleName();
@@ -40,7 +49,10 @@ public final class GameService extends Service implements ReceiverManager {
     public static final String Broadcast_STOP_SERVER = buildBroadcast("STOP_SERVER");
 
     @NonNull
-    public static final String Broadcast_FIRST_MOVED = buildBroadcast("FIRST_MOVED");
+    public static final String Broadcast_HOST_MOVED = buildBroadcast("FIRST_MOVED");
+
+    @NonNull
+    public static final String CELL_KEY = "cell";
 
     @NonNull
     private final Binder binder = new Binder() {};
@@ -49,7 +61,12 @@ public final class GameService extends Service implements ReceiverManager {
     private Disposable serverTask;
 
     @NonNull
-    private final MutableLiveData<PlayerRole[]> rolesState = new MutableLiveData<>(null);
+    @Override
+    public Context getReceiverContext() { return this; }
+
+    @Inject
+    @NonNull
+    MutableLiveData<String> hostState;
 
     @NonNull
     private final BroadcastReceiver stopServerReceiver = new BroadcastReceiver() {
@@ -60,27 +77,35 @@ public final class GameService extends Service implements ReceiverManager {
     };
 
     @NonNull
-    private final BroadcastReceiver firstMovedReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver hostMovedReceiver = new BroadcastReceiver() {
+        @SuppressLint("CheckResult")
         @Override
         public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
-            // TODO: check if game is finished, send broadcasts
+            final byte cellPos = (byte) intent.getIntExtra(CELL_KEY, 0);
+
+            Completable
+                    .fromRunnable(() -> {
+                        try {
+                            ServerLauncher.sendHostMoved(GameService.this, cellPos);
+                        } catch (final IOException e) {
+                            e.printStackTrace();
+                        }
+                    })
+                    .subscribeOn(Schedulers.io())
+                    .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
         }
     };
-
-    @NonNull
-    @Override
-    public Context getReceiverContext() { return this; }
 
     @Override
     public void registerReceivers() {
         registerReceiverCompat(stopServerReceiver, Broadcast_STOP_SERVER);
-        registerReceiverCompat(firstMovedReceiver, Broadcast_FIRST_MOVED);
+        registerReceiverCompat(hostMovedReceiver, Broadcast_HOST_MOVED);
     }
 
     @Override
     public void unregisterReceivers() {
         unregisterReceiver(stopServerReceiver);
-        unregisterReceiver(firstMovedReceiver);
+        unregisterReceiver(hostMovedReceiver);
     }
 
     @Override
@@ -111,38 +136,17 @@ public final class GameService extends Service implements ReceiverManager {
         return ServerLauncher.getLocalHost(this)
                 .map(host -> {
                     Objects.requireNonNull(host); // TODO: handle no wifi connection
+                    hostState.postValue(host);
                     ServerLauncher.sendHost(this, host);
                     return host;
                 })
-                .flatMapCompletable((host) -> {
-                    rolesState.postValue(generateRoles());
-                    return ServerLauncher.launch(this, host, rolesState);
-                })
-                .subscribeWith(disposableLaunchObserver());
-    }
-
-    @NonNull
-    private static DisposableCompletableObserver disposableLaunchObserver() {
-        return new DisposableCompletableObserver() {
-            @Override
-            public void onComplete() {}
-
-            @Override
-            public void onError(final @NonNull Throwable e) {}
-        };
+                .flatMapCompletable((host) -> ServerLauncher.launch(this, host))
+                .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
     }
 
     private void stopServer() {
         if (serverTask != null)
             serverTask.dispose();
         serverTask = null;
-    }
-
-    @NonNull
-    private PlayerRole[] generateRoles() {
-        final PlayerRole[] roles = PlayerRole.values();
-        final int hostRole = new Random().nextInt() % 2;
-        final int clientRole = (hostRole + 1) % 2;
-        return new PlayerRole[] { roles[hostRole], roles[clientRole] };
     }
 }
