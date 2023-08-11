@@ -38,7 +38,7 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     final GameFragmentUIHandler handler;
 
     @NonNull
-    final SavedStateHandle savedStateHandle;
+    private final SavedStateHandle savedStateHandle;
 
     @Inject
     public GameFragmentViewModel(
@@ -98,7 +98,8 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
 
     @Nullable
     public PlayerType getPlayerType() {
-        return PlayerType.values()[getPlayerTypeState().getValue()];
+        final Integer typeOrd = getPlayerTypeState().getValue();
+        return typeOrd != null ? PlayerType.values()[typeOrd] : null;
     }
 
     public void postPlayerType(final @NonNull PlayerType playerType) {
@@ -111,7 +112,8 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
 
     @Nullable
     public PlayerRole getPlayerRole() {
-        return PlayerRole.values()[getPlayerRoleState().getValue()];
+        final Integer roleOrd = getPlayerRoleState().getValue();
+        return roleOrd != null ? PlayerRole.values()[roleOrd] : null;
     }
 
     public void postPlayerRole(final @NonNull PlayerRole playerRole) {
@@ -126,7 +128,8 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
 
     @Nullable
     public PlayerRole getCurrentMovingPlayer() {
-        return PlayerRole.values()[getCurrentMovingPlayerState().getValue()];
+        final Integer roleOrd = getCurrentMovingPlayerState().getValue();
+        return roleOrd != null ? PlayerRole.values()[roleOrd] : null;
     }
 
     public void postCurrentMovingPlayer(final @NonNull PlayerRole currentMovingPlayer) {

@@ -10,26 +10,22 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
-import com.paranid5.tic_tac_toe.di.NetworkModule;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.domain.network.ServerLauncher;
 import com.paranid5.tic_tac_toe.domain.utils.network.DefaultDisposableCompletable;
 
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @AndroidEntryPoint
@@ -57,8 +53,8 @@ public final class GameService extends Service implements ReceiverManager {
     @NonNull
     private final Binder binder = new Binder() {};
 
-    @Nullable
-    private Disposable serverTask;
+    @NonNull
+    private UUID serverTaskId;
 
     @NonNull
     @Override
@@ -119,7 +115,7 @@ public final class GameService extends Service implements ReceiverManager {
     @Override
     public IBinder onBind(final @NonNull Intent intent) {
         Log.d(TAG, "onBind()");
-        serverTask = sendLocalHostAndStartServer();
+        startServer();
         return binder;
     }
 
@@ -131,22 +127,16 @@ public final class GameService extends Service implements ReceiverManager {
         unregisterReceivers();
     }
 
-    @NonNull
-    private DisposableCompletableObserver sendLocalHostAndStartServer() {
-        return ServerLauncher.getLocalHost(this)
-                .map(host -> {
-                    Objects.requireNonNull(host); // TODO: handle no wifi connection
-                    hostState.postValue(host);
-                    ServerLauncher.sendHost(this, host);
-                    return host;
-                })
-                .flatMapCompletable((host) -> ServerLauncher.launch(this, host))
-                .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
+    private void startServer() {
+        final OneTimeWorkRequest serverTask = new OneTimeWorkRequest
+                .Builder(ServerLauncher.class)
+                .build();
+
+        serverTaskId = serverTask.getId();
+        WorkManager.getInstance(this).enqueue(serverTask);
     }
 
     private void stopServer() {
-        if (serverTask != null)
-            serverTask.dispose();
-        serverTask = null;
+        WorkManager.getInstance(this).cancelWorkById(serverTaskId);
     }
 }

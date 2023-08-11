@@ -15,23 +15,25 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.WorkManager;
 
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.databinding.FragmentGameBinding;
-import com.paranid5.tic_tac_toe.di.NetworkModule;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 
 @AndroidEntryPoint
 public final class GameFragment extends Fragment implements UIStateChangesObserver, ReceiverManager {
@@ -64,19 +66,16 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @NonNull
     private GameFragmentViewModel viewModel;
 
-    @NonNull
     @Inject
+    @NonNull
     MutableLiveData<Socket> clientState;
 
     @Nullable
     private Socket getClient() { return clientState.getValue(); }
 
-    @NonNull
     @Inject
-    MutableLiveData<DisposableCompletableObserver> clientTaskState;
-
-    @Nullable
-    private DisposableCompletableObserver getClientTask() { return clientTaskState.getValue(); }
+    @NonNull
+    AtomicReference<UUID> clientTaskIdState;
 
     @NonNull
     private final StateChangedCallback<GameFragmentUIHandler, Integer> cellClickedCallback = (handler, cellPos) -> {
@@ -97,8 +96,8 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             final int cellPos = intent.getByteExtra(CELL_KEY, (byte) 0);
             final PlayerType movedPlayer = PlayerType.values()[intent.getIntExtra(PLAYER_TYPE, 0)];
 
-            final PlayerType curPlayer = viewModel.getPlayerType();
-            final PlayerRole curRole = viewModel.getPlayerRole();
+            final PlayerType curPlayer = Objects.requireNonNull(viewModel.getPlayerType());
+            final PlayerRole curRole = Objects.requireNonNull(viewModel.getPlayerRole());
             final Integer[] cells = viewModel.getCellsState().getValue();
             final PlayerRole movedRole = movedPlayer == curPlayer ? curRole : curRole.nextRole();
 
@@ -109,8 +108,6 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             viewModel.postCurrentMovingPlayer(nextMovingPlayer);
         }
     };
-
-    GameFragment() {}
 
     @NonNull
     public static GameFragment newInstance(
@@ -140,11 +137,8 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         Log.d(TAG, String.format("Start game as %s %s", type, role));
 
         viewModel = new ViewModelProvider(this).get(GameFragmentViewModel.class);
-
-        if (viewModel.getPlayerType() == null || viewModel.getPlayerRole() == null) {
-            viewModel.postPlayerType(type);
-            viewModel.postPlayerRole(role);
-        }
+        if (viewModel.getPlayerType() == null) viewModel.postPlayerType(type);
+        if (viewModel.getPlayerRole() == null) viewModel.postPlayerRole(role);
 
         viewModel.startStatesObserving(this);
 
@@ -152,14 +146,30 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         binding.setViewModel(viewModel);
 
         observeUIStateChanges();
-        registerReceivers();
         return binding.getRoot();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerReceivers();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        unregisterReceivers();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceivers();
+
+        try {
+            stopClient();
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -184,10 +194,11 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     private void stopClient() throws IOException {
         Log.d(TAG, "Stopping client");
 
-        if (getClientTask() != null) {
-            getClientTask().dispose();
-            clientTaskState.postValue(null);
-        };
+        WorkManager
+                .getInstance(requireContext())
+                .cancelWorkById(clientTaskIdState.get());
+
+        clientTaskIdState.set(null);
 
         if (getClient() != null) {
             getClient().close();

@@ -16,8 +16,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
@@ -31,11 +33,12 @@ import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
 
 @AndroidEntryPoint
 public final class SelectGameRoomTypeFragment extends Fragment implements UIStateChangesObserver, ReceiverManager {
@@ -77,9 +80,9 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     @Nullable
     private DialogInterface gameHostInputDialog;
 
-    @NonNull
     @Inject
-    MutableLiveData<DisposableCompletableObserver> clientTaskState;
+    @NonNull
+    AtomicReference<UUID> clientTaskIdState;
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> createNewRoomButtonClickedCallback = (handler, t) -> {
@@ -89,7 +92,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> connectRoomButtonClickedCallback = (handler, t) -> {
-        showGameHostInput();
+        gameHostInputDialog = showGameHostInput();
         viewModel.onConnectRoomButtonClickedFinished();
     };
 
@@ -150,13 +153,18 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
         binding.setViewModel(viewModel);
 
         observeUIStateChanges();
-        registerReceivers();
         return binding.getRoot();
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onResume() {
+        super.onResume();
+        registerReceivers();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
         unregisterReceivers();
         dismissShowGameHostDialog();
         dismissGameHostInputDialog();
@@ -188,7 +196,6 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     private AlertDialog showGameHost(final @NonNull String host) {
         return new AlertDialog.Builder(requireContext())
-                .setCancelable(false)
                 .setTitle(R.string.your_ip)
                 .setMessage(host)
                 .setNegativeButton(
@@ -202,16 +209,19 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     }
 
     private void dismissShowGameHostDialog() {
+        Log.d(TAG, "Stopping show host dialog");
+
         if (showGameHostDialog != null) {
             showGameHostDialog.dismiss();
             showGameHostDialog = null;
+            Log.d(TAG, "Dialog is stopped");
         }
     }
 
-    private void showGameHostInput() {
+    private AlertDialog showGameHostInput() {
         final DialogInputHostBinding dialogBinding = DialogInputHostBinding.inflate(getLayoutInflater());
 
-        gameHostInputDialog = new AlertDialog.Builder(requireContext())
+        return new AlertDialog.Builder(requireContext())
                 .setCancelable(false)
                 .setTitle(R.string.host_ip)
                 .setView(dialogBinding.getRoot())
@@ -235,9 +245,17 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     }
 
     private void connectClientSocket(final @NonNull String host) throws IOException {
-        clientTaskState.postValue(
-                ClientLauncher.launch(host, requireContext())
-        );
+        final OneTimeWorkRequest clientTask = new OneTimeWorkRequest
+                .Builder(ClientLauncher.class)
+                .setInputData(
+                        new Data.Builder()
+                                .putString(ClientLauncher.HOST_KEY, host)
+                                .build()
+                )
+                .build();
+
+        clientTaskIdState.set(clientTask.getId());
+        WorkManager.getInstance(requireContext()).enqueue(clientTask);
     }
 
     private void dismissGameHostInputDialog() {

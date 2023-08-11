@@ -8,11 +8,15 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.arch.core.util.Function;
+import androidx.hilt.work.HiltWorker;
 import androidx.lifecycle.MutableLiveData;
+import androidx.work.RxWorker;
+import androidx.work.WorkerParameters;
 
 import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.domain.utils.extensions.ListExt;
+import com.paranid5.tic_tac_toe.domain.utils.network.NetUtils;
 import com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragment;
 import com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment.SelectGameRoomTypeFragment;
 
@@ -34,16 +38,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedInject;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.components.SingletonComponent;
 
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 
-public final class ServerLauncher {
+@HiltWorker
+public final class ServerLauncher extends RxWorker {
     @NonNull
     private static final String TAG = ServerLauncher.class.getSimpleName();
 
@@ -57,33 +63,55 @@ public final class ServerLauncher {
     }
 
     @NonNull
-    private static final Map<Byte, Function<RequestCallbackArgs, Void>> requestHandlers = buildRequestHandlers();
+    private static final Map<Byte, Function<RequestCallbackArgs<SocketChannel>, Void>> requestHandlers = buildRequestHandlers();
 
     @NonNull
-    private static Map<Byte, Function<RequestCallbackArgs, Void>> buildRequestHandlers() {
-        final Map<Byte, Function<RequestCallbackArgs, Void>> rh = new HashMap<>();
+    private static Map<Byte, Function<RequestCallbackArgs<SocketChannel>, Void>> buildRequestHandlers() {
+        final Map<Byte, Function<RequestCallbackArgs<SocketChannel>, Void>> rh = new HashMap<>();
         rh.put(CLIENT_MOVED, ServerLauncher::onClientMoved);
         return rh;
     }
 
+    @AssistedInject
+    ServerLauncher(
+            final @Assisted @NonNull Context context,
+            final @Assisted @NonNull WorkerParameters params
+    ) { super(context, params); }
+
     @NonNull
-    public static Single<String> getLocalHost(final @NonNull Context context) {
+    @Override
+    public Single<Result> createWork() {
+        return ServerLauncher.getWifiHost(getApplicationContext()).map(host -> {
+            postHost(getApplicationContext(), Objects.requireNonNull(host));
+            ServerLauncher.sendHost(getApplicationContext(), host);
+            ServerLauncher.launchServer(getApplicationContext(), host);
+            return Result.success();
+        });
+    }
+
+    @NonNull
+    private static Single<String> getWifiHost(final @NonNull Context context) {
         return Single
                 .fromCallable(() -> ServerLauncher.mGetWifiHost(context))
                 .subscribeOn(Schedulers.io());
     }
 
-    @NonNull
-    public static Completable launch(final @NonNull Context ctx, final @NonNull String host) {
-        return Completable
-                .fromRunnable(() -> {
-                    try {
-                        launchServer(ctx, host);
-                    } catch (final IOException e) {
-                        e.printStackTrace();
-                    }
-                })
-                .subscribeOn(Schedulers.io());
+    @Nullable
+    private static String mGetWifiHost(final @NonNull Context context) {
+        final WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        final int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+
+        try {
+            return InetAddress.getByAddress(
+                    ByteBuffer
+                            .allocate(4)
+                            .order(ByteOrder.LITTLE_ENDIAN)
+                            .putInt(ipAddress)
+                            .array()
+            ).getHostAddress();
+        } catch (final UnknownHostException e) {
+            return null;
+        }
     }
 
     private static void launchServer(
@@ -108,13 +136,11 @@ public final class ServerLauncher {
                 if (key.isAcceptable()) {
                     final SocketChannel client = registerClient(server, selector);
                     postClientSocket(ctx, client);
-
                     sendGameStart(ctx, client, buffer);
                     buffer.flip();
                 } else if (key.isReadable()) {
                     final SocketChannel client = (SocketChannel) key.channel();
                     postClientSocket(ctx, client);
-
                     onClientRequestReceived(client, buffer, ctx);
                     buffer.flip();
                 }
@@ -124,39 +150,18 @@ public final class ServerLauncher {
         }
     }
 
-    @Nullable
-    private static String mGetWifiHost(final @NonNull Context context) {
-        final WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        final int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-
-        try {
-            return InetAddress.getByAddress(
-                    ByteBuffer
-                            .allocate(4)
-                            .order(ByteOrder.LITTLE_ENDIAN)
-                            .putInt(ipAddress)
-                            .array()
-            ).getHostAddress();
-        } catch (final UnknownHostException e) {
-            return null;
-        }
-    }
-
     @NonNull
     private static ServerSocketChannel gameServer(final @NonNull String host) throws IOException {
-        Log.d(TAG, "Prepare to run server");
         final ServerSocketChannel server = ServerSocketChannel.open();
-        Log.d(TAG, "Server socket is created");
         final InetSocketAddress addr = new InetSocketAddress(host, 8080);
         server.socket().bind(addr);
-        Log.d(TAG, String.format("Server is binded to %s", addr));
         server.configureBlocking(false);
-        Log.d(TAG, "Server is non blocking");
+        Log.d(TAG, String.format("Server is binded to %s", addr));
         return server;
     }
 
-    public static void sendHost(final @NonNull Context ctx, final @NonNull String host) {
-        Log.d(TAG, String.format("Server will launch on %s", host));
+    private static void sendHost(final @NonNull Context ctx, final @NonNull String host) {
+        Log.d(TAG, String.format("Sending host %s to the UI", host));
 
         ctx.sendBroadcast(
                 new Intent(SelectGameRoomTypeFragment.Broadcast_GAME_HOST)
@@ -166,10 +171,9 @@ public final class ServerLauncher {
 
     @NonNull
     private static Selector serverSelector(final @NonNull ServerSocketChannel server) throws IOException {
-        Log.d(TAG, "Creating selector");
         final Selector selector = Selector.open();
         server.register(selector, SelectionKey.OP_ACCEPT);
-        Log.d(TAG, "Selector is configured");
+        Log.d(TAG, "Server selector is configured");
         return selector;
     }
 
@@ -183,17 +187,6 @@ public final class ServerLauncher {
         client.register(selector, SelectionKey.OP_READ);
         Log.d(TAG, "Client is registered");
         return client;
-    }
-
-    @Nullable
-    private static String getHost(final @NonNull Context ctx) {
-        return EntryPointAccessors
-                .fromApplication(
-                        ctx.getApplicationContext(),
-                        ServerLauncherEntryPoint.class
-                )
-                .hostState()
-                .getValue();
     }
 
     private static void postHost(
@@ -214,7 +207,7 @@ public final class ServerLauncher {
             final @NonNull SocketChannel client,
             final @NonNull ByteBuffer buffer
     ) throws IOException {
-        Log.d(TAG, "Sending game start to host");
+        Log.d(TAG, "Sending game start to both players");
 
         final PlayerRole[] roles = generateRoles();
         Log.d(TAG, String.format("Generated roles: %s", Arrays.toString(roles)));
@@ -244,16 +237,18 @@ public final class ServerLauncher {
 
         if (client.read(buffer) < 0) {
             Log.d(TAG, "Connection with client is lost");
-            //client.close();
+            client.close();
             return;
         }
 
         final byte[] msg = buffer.array();
         final byte request = msg[0];
-        final byte[] body = parseBody(msg);
+        final byte[] body = NetUtils.parseBody(msg);
 
-        Log.d(TAG, String.format("Request %s is received: %s", request, Arrays.toString(body)));
-        requestHandlers.get(request).apply(new RequestCallbackArgs(null, client, body, context));
+        Log.d(TAG, String.format("Request %s is received with body %s", request, Arrays.toString(body)));
+
+        Objects.requireNonNull(requestHandlers.get(request))
+                .apply(new RequestCallbackArgs<>(client, body, context));
     }
 
     private static void sendClientRequest(
@@ -275,13 +270,6 @@ public final class ServerLauncher {
             final long bytes = client.write(buffer);
             Log.d(TAG, String.format("Sent request %s; bytes: %s", request, bytes));
         }
-    }
-
-    @NonNull
-    private static byte[] parseBody(final @NonNull byte[] msg) {
-        final byte[] body = new byte[msg.length - 1];
-        System.arraycopy(msg, 1, body, 0, body.length);
-        return body;
     }
 
     @NonNull

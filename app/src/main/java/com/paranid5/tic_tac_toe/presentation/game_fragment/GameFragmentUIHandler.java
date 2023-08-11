@@ -27,6 +27,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @Singleton
 public final class GameFragmentUIHandler implements UIHandler {
+    private static final String TAG = GameFragmentUIHandler.class.getSimpleName();
+
     @Inject
     public GameFragmentUIHandler() {}
 
@@ -58,7 +60,7 @@ public final class GameFragmentUIHandler implements UIHandler {
             final @NonNull Socket client,
             final byte cellPosition
     ) {
-        Log.d("GameUIHandler", String.format("Send %s move to server", cellPosition));
+        Log.d(TAG, String.format("Send %s move to server", cellPosition));
 
         return Completable
                 .fromRunnable(() -> {
