@@ -47,6 +47,8 @@ public final class ClientLauncher extends RxWorker {
 
     public static final byte HOST_MOVED = 1;
 
+    public static final byte HOST_WON = 2;
+
     public static final String HOST_KEY = "host";
 
     @EntryPoint
@@ -64,6 +66,7 @@ public final class ClientLauncher extends RxWorker {
         final Map<Byte, Function<RequestCallbackArgs<Socket>, Void>> rh = new HashMap<>();
         rh.put(GAME_START, ClientLauncher::onGameStartReceived);
         rh.put(HOST_MOVED, ClientLauncher::onHostMoved);
+        rh.put(HOST_WON, ClientLauncher::onHostWon);
         return rh;
     }
 
@@ -199,6 +202,15 @@ public final class ClientLauncher extends RxWorker {
                 new Intent(GameFragment.Broadcast_PLAYER_MOVED)
                         .putExtra(GameFragment.PLAYER_TYPE, PlayerType.HOST.ordinal())
                         .putExtra(GameFragment.CELL_KEY, cellPos)
+        );
+
+        return null;
+    }
+
+    private static Void onHostWon(final @NonNull RequestCallbackArgs<Socket> args) {
+        args.context.sendBroadcast(
+                new Intent(GameFragment.Broadcast_PLAYER_WON)
+                        .putExtra(GameFragment.PLAYER_TYPE, PlayerType.HOST.ordinal())
         );
 
         return null;

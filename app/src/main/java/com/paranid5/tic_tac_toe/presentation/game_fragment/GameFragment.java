@@ -52,6 +52,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     public static final String Broadcast_PLAYER_MOVED = buildBroadcast("HOST_MOVED");
 
     @NonNull
+    public static final String Broadcast_PLAYER_WON = buildBroadcast("PLAYER_WON");
+
+    @NonNull
     public static String PLAYER_TYPE = "player_type";
 
     @NonNull
@@ -106,6 +109,16 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
             final PlayerRole nextMovingPlayer = viewModel.getCurrentMovingPlayer().nextRole();
             viewModel.postCurrentMovingPlayer(nextMovingPlayer);
+        }
+    };
+
+    @NonNull
+    private final BroadcastReceiver playerWonReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            final PlayerType victor = PlayerType.values()[intent.getIntExtra(PLAYER_TYPE, 0)];
+
+            // TODO: Stop game and show winner
         }
     };
 
@@ -184,11 +197,13 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @Override
     public void registerReceivers() {
         registerReceiverCompat(playerMovedReceiver, Broadcast_PLAYER_MOVED);
+        registerReceiverCompat(playerWonReceiver, Broadcast_PLAYER_WON);
     }
 
     @Override
     public void unregisterReceivers() {
         stopReceiver(playerMovedReceiver);
+        stopReceiver(playerWonReceiver);
     }
 
     private void stopClient() throws IOException {

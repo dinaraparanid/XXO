@@ -15,9 +15,9 @@ import androidx.work.WorkerParameters;
 
 import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
+import com.paranid5.tic_tac_toe.domain.game_service.GameService;
 import com.paranid5.tic_tac_toe.domain.utils.extensions.ListExt;
 import com.paranid5.tic_tac_toe.domain.utils.network.NetUtils;
-import com.paranid5.tic_tac_toe.presentation.game_fragment.GameFragment;
 import com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment.SelectGameRoomTypeFragment;
 
 import java.io.IOException;
@@ -213,6 +213,12 @@ public final class ServerLauncher extends RxWorker {
         Log.d(TAG, String.format("Generated roles: %s", Arrays.toString(roles)));
 
         context.sendBroadcast(
+                new Intent(GameService.Broadcast_ROLES_GENERATED)
+                        .putExtra(GameService.HOST_ROLE_KEY, roles[0].ordinal())
+                        .putExtra(GameService.CLIENT_ROLE_KEY, roles[1].ordinal())
+        );
+
+        context.sendBroadcast(
                 new Intent(SelectGameRoomTypeFragment.Broadcast_GAME_START)
                         .putExtra(SelectGameRoomTypeFragment.PLAYER_TYPE_KEY, PlayerType.HOST.ordinal())
                         .putExtra(SelectGameRoomTypeFragment.PLAYER_ROLE_KEY, roles[0].ordinal())
@@ -279,13 +285,12 @@ public final class ServerLauncher extends RxWorker {
         return roles.toArray(new PlayerRole[0]);
     }
 
-    private static Void onClientMoved(final @NonNull RequestCallbackArgs args) {
-        final byte cellPos = args.body[0];
+    private static Void onClientMoved(final @NonNull RequestCallbackArgs<SocketChannel> args) {
+        final int cellPos = args.body[0];
 
         args.context.sendBroadcast(
-                new Intent(GameFragment.Broadcast_PLAYER_MOVED)
-                        .putExtra(GameFragment.PLAYER_TYPE, PlayerType.CLIENT.ordinal())
-                        .putExtra(GameFragment.CELL_KEY, cellPos)
+                new Intent(GameService.Broadcast_CLIENT_MOVED)
+                        .putExtra(GameService.CELL_KEY, cellPos)
         );
 
         return null;
@@ -300,6 +305,15 @@ public final class ServerLauncher extends RxWorker {
                 ByteBuffer.allocate(8),
                 ClientLauncher.HOST_MOVED,
                 new byte[] { cellPosition }
+        );
+    }
+
+    public static void sendHostWon(final @NonNull Context context) throws IOException {
+        sendClientRequest(
+                Objects.requireNonNull(serverClientSocket(context)),
+                ByteBuffer.allocate(8),
+                ClientLauncher.HOST_WON,
+                new byte[0]
         );
     }
 
