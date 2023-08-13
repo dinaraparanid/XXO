@@ -90,7 +90,7 @@ public final class ServerLauncher extends RxWorker {
     }
 
     @NonNull
-    private static Single<String> getWifiHost(final @NonNull Context context) {
+    public static Single<String> getWifiHost(final @NonNull Context context) {
         return Single
                 .fromCallable(() -> ServerLauncher.mGetWifiHost(context))
                 .subscribeOn(Schedulers.io());
@@ -160,7 +160,7 @@ public final class ServerLauncher extends RxWorker {
         return server;
     }
 
-    private static void sendHost(final @NonNull Context ctx, final @NonNull String host) {
+    public static void sendHost(final @NonNull Context ctx, final @NonNull String host) {
         Log.d(TAG, String.format("Sending host %s to the UI", host));
 
         ctx.sendBroadcast(
@@ -326,7 +326,7 @@ public final class ServerLauncher extends RxWorker {
                 Objects.requireNonNull(serverClientSocket(context)),
                 ByteBuffer.allocate(8),
                 ClientLauncher.DRAW,
-                new byte[] { (byte) movedPlayer.ordinal(), cellPosition }
+                new byte[] { cellPosition, (byte) movedPlayer.ordinal() }
         );
     }
 

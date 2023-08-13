@@ -17,7 +17,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.work.WorkManager;
 
-import com.paranid5.tic_tac_toe.MainApplication;
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.data.GameStatus;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
@@ -117,7 +116,11 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             viewModel.postGameStatus(new GameStatus.Victor(victor));
             Log.d(TAG, String.format("Player %s has won", victor));
 
-            stopNetworkLaunchers();
+            try {
+                stopClientIfLaunched();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -130,7 +133,11 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             viewModel.postGameStatus(new GameStatus.Draw());
             Log.d(TAG, "Draw");
 
-            stopNetworkLaunchers();
+            try {
+                stopClientIfLaunched();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -189,7 +196,12 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopNetworkLaunchers();
+
+        try {
+            stopClientIfLaunched();
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -223,25 +235,6 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
         cells[cellPos] = viewModel.getPlayerRoleByType(movedPlayer).ordinal();
         viewModel.postCellsState(cells);
-    }
-
-    private void stopNetworkLaunchers() {
-        stopServiceIfBinded();
-
-        try {
-            stopClientIfLaunched();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void stopServiceIfBinded() {
-        final MainApplication app = (MainApplication) requireActivity().getApplication();
-
-        if (app.isGameServiceConnected) {
-            app.unbindService(app.gameServiceConnection);
-            app.isGameServiceConnected = false;
-        }
     }
 
     private void stopClientIfLaunched() throws IOException {

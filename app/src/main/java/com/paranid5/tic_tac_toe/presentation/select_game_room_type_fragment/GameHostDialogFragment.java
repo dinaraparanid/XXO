@@ -10,20 +10,38 @@ import androidx.fragment.app.DialogFragment;
 
 import com.paranid5.tic_tac_toe.R;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public final class GameHostDialogFragment extends DialogFragment {
+    private static final String HOST_KEY = "host";
+
+    @Inject
+    SelectGameRoomTypeUIHandler handler;
+
+    @NonNull
+    public static GameHostDialogFragment newInstance(final @NonNull String host) {
+        final GameHostDialogFragment fragment = new GameHostDialogFragment();
+        final Bundle args = new Bundle();
+        args.putString(HOST_KEY, host);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(final @Nullable Bundle savedInstanceState) {
+        final String host = requireArguments().getString(HOST_KEY);
+
         return new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.your_ip)
                 .setMessage(host)
                 .setNegativeButton(
                         R.string.cancel,
-                        (dialogInterface, i) -> {
-                            viewModel.onGameCancelButtonClicked();
-                            dialogInterface.dismiss();
-                        }
+                        (dialogInterface, i) -> dialogInterface.dismiss()
                 )
-                .show();
+                .create();
     }
 }

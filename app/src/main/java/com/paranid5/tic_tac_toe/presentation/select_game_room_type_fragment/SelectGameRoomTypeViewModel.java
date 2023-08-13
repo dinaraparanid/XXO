@@ -86,27 +86,6 @@ public final class SelectGameRoomTypeViewModel extends ObservableViewModel<Selec
     }
 
     @NonNull
-    private final MutableLiveData<StateChangedCallback.State<Void>> isGameCancelButtonClickedMutableState =
-            new MutableLiveData<>(new StateChangedCallback.State<>());
-
-    @NonNull
-    public LiveData<StateChangedCallback.State<Void>> getGameCancelButtonClickedState() {
-        return isGameCancelButtonClickedMutableState;
-    }
-
-    public void onGameCancelButtonClicked() {
-        isGameCancelButtonClickedMutableState.postValue(
-                new StateChangedCallback.State<>(true)
-        );
-    }
-
-    public void onGameCancelButtonClickedFinished() {
-        isGameCancelButtonClickedMutableState.postValue(
-                new StateChangedCallback.State<>(false)
-        );
-    }
-
-    @NonNull
     final MutableLiveData<StateChangedCallback.State<Pair<PlayerType, PlayerRole>>> isGameStartReceivedMutableState =
             new MutableLiveData<>(new StateChangedCallback.State<>());
 

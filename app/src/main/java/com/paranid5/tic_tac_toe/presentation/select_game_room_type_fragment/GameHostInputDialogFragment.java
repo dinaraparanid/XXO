@@ -7,19 +7,34 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.databinding.DialogInputHostBinding;
+import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
 
 import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public final class GameHostInputDialogFragment extends DialogFragment {
+    @Inject
+    @NonNull
+    AtomicReference<UUID> clientTaskIdState;
+
     @NonNull
     @Override
     public Dialog onCreateDialog(final @Nullable Bundle savedInstanceState) {
         final DialogInputHostBinding dialogBinding = DialogInputHostBinding.inflate(getLayoutInflater());
 
-        return new AlertDialog.Builder(requireContext())
+        final AlertDialog d = new AlertDialog.Builder(requireContext())
                 .setCancelable(false)
                 .setTitle(R.string.host_ip)
                 .setView(dialogBinding.getRoot())
@@ -32,13 +47,31 @@ public final class GameHostInputDialogFragment extends DialogFragment {
                                 e.printStackTrace();
                             }
 
-                            dismissGameHostInputDialog();
+                            dialogInterface.dismiss();
                         }
                 )
                 .setNegativeButton(
                         R.string.cancel,
-                        (dialogInterface, i) -> dismissGameHostInputDialog()
+                        (dialogInterface, i) -> dialogInterface.dismiss()
                 )
-                .show();
+                .create();
+
+        setCancelable(false);
+        d.setCanceledOnTouchOutside(false);
+        return d;
+    }
+
+    private void connectClientSocket(final @NonNull String host) throws IOException {
+        final OneTimeWorkRequest clientTask = new OneTimeWorkRequest
+                .Builder(ClientLauncher.class)
+                .setInputData(
+                        new Data.Builder()
+                                .putString(ClientLauncher.HOST_KEY, host)
+                                .build()
+                )
+                .build();
+
+        clientTaskIdState.set(clientTask.getId());
+        WorkManager.getInstance(requireContext()).enqueue(clientTask);
     }
 }

@@ -49,6 +49,9 @@ public final class GameService extends Service implements ReceiverManager {
     }
 
     @NonNull
+    public static final String Broadcast_WIFI_HOST = buildBroadcast("WIFI_HOST");
+
+    @NonNull
     public static final String Broadcast_STOP_SERVER = buildBroadcast("STOP_SERVER");
 
     @NonNull
@@ -87,7 +90,22 @@ public final class GameService extends Service implements ReceiverManager {
     private Pair<PlayerRole, PlayerRole> hostAndClientRoles;
 
     @NonNull
-    private final PlayerRole[] cells = new PlayerRole[9];
+    private PlayerRole[] cells = new PlayerRole[9];
+
+    @NonNull
+    private final BroadcastReceiver wifiHostReceiver = new BroadcastReceiver() {
+        @SuppressLint("CheckResult")
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            ServerLauncher
+                    .getWifiHost(getApplicationContext())
+                    .flatMapCompletable(host -> io.reactivex.Completable.fromRunnable(() -> {
+                        hostState.postValue(host);
+                        ServerLauncher.sendHost(getApplicationContext(), host);
+                    }))
+                    .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserverOld());
+        }
+    };
 
     @NonNull
     private final BroadcastReceiver stopServerReceiver = new BroadcastReceiver() {
@@ -104,6 +122,7 @@ public final class GameService extends Service implements ReceiverManager {
             final PlayerRole hostRole = PlayerRole.values()[intent.getIntExtra(HOST_ROLE_KEY, 0)];
             final PlayerRole clientRole = PlayerRole.values()[intent.getIntExtra(CLIENT_ROLE_KEY, 0)];
             hostAndClientRoles = new Pair<>(hostRole, clientRole);
+            cells = new PlayerRole[9];
         }
     };
 
@@ -153,6 +172,7 @@ public final class GameService extends Service implements ReceiverManager {
 
     @Override
     public void registerReceivers() {
+        registerReceiverCompat(wifiHostReceiver, Broadcast_WIFI_HOST);
         registerReceiverCompat(stopServerReceiver, Broadcast_STOP_SERVER);
         registerReceiverCompat(rolesGeneratedReceiver, Broadcast_ROLES_GENERATED);
         registerReceiverCompat(hostMovedReceiver, Broadcast_HOST_MOVED);
@@ -161,6 +181,7 @@ public final class GameService extends Service implements ReceiverManager {
 
     @Override
     public void unregisterReceivers() {
+        unregisterReceiver(wifiHostReceiver);
         unregisterReceiver(stopServerReceiver);
         unregisterReceiver(rolesGeneratedReceiver);
         unregisterReceiver(hostMovedReceiver);
@@ -219,7 +240,7 @@ public final class GameService extends Service implements ReceiverManager {
         }
 
         ServerLauncher.sendDraw(GameService.this, PlayerType.HOST, cellPos);
-        sendDraw();
+        sendDraw(PlayerType.HOST, cellPos);
     }
 
     private void onClientMoved(final int cellPos) throws IOException {
@@ -237,7 +258,7 @@ public final class GameService extends Service implements ReceiverManager {
         }
 
         ServerLauncher.sendDraw(GameService.this, PlayerType.CLIENT, (byte) cellPos);
-        sendDraw();
+        sendDraw(PlayerType.CLIENT, cellPos);
     }
 
     @NonNull
@@ -304,7 +325,11 @@ public final class GameService extends Service implements ReceiverManager {
         );
     }
 
-    private void sendDraw() {
-        sendBroadcast(new Intent(GameFragment.Broadcast_DRAW));
+    private void sendDraw(final @NonNull PlayerType playerType, final int cellPos) {
+        sendBroadcast(
+                new Intent(GameFragment.Broadcast_DRAW)
+                        .putExtra(GameFragment.PLAYER_TYPE_KEY, playerType.ordinal())
+                        .putExtra(GameFragment.CELL_KEY, cellPos)
+        );
     }
 }

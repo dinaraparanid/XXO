@@ -15,4 +15,15 @@ public class DefaultDisposableCompletable {
             public void onError(final @NonNull Throwable e) {}
         };
     }
+
+    @NonNull
+    public static io.reactivex.observers.DisposableCompletableObserver disposableCompletableObserverOld() {
+        return new io.reactivex.observers.DisposableCompletableObserver() {
+            @Override
+            public void onComplete() {}
+
+            @Override
+            public void onError(final @NonNull Throwable e) {}
+        };
+    }
 }

@@ -19,7 +19,14 @@ public final class GameServiceAccessor extends ServiceAccessor {
         super(application);
     }
 
-    public void bindService() {
+    public void bindServiceOrSendWifiHostRequest() {
+        if (application.isGameServiceConnected)
+            sendBroadcast(GameService.Broadcast_WIFI_HOST);
+        else
+            bindService();
+    }
+
+    private void bindService() {
         final Intent serviceIntent = new Intent(application, GameService.class);
 
         application.bindService(
@@ -27,10 +34,5 @@ public final class GameServiceAccessor extends ServiceAccessor {
                 application.gameServiceConnection,
                 Service.BIND_AUTO_CREATE
         );
-    }
-
-    public void stopServer() {
-        sendBroadcast(GameService.Broadcast_STOP_SERVER);
-        application.unbindService(application.gameServiceConnection);
     }
 }

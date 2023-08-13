@@ -1,6 +1,5 @@
 package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,32 +11,21 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
 
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
-import com.paranid5.tic_tac_toe.databinding.DialogInputHostBinding;
 import com.paranid5.tic_tac_toe.databinding.FragmentSelectGameRoomTypeBinding;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
-import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 
-import java.io.IOException;
 import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -82,14 +70,10 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private SelectGameRoomTypeViewModel viewModel;
 
     @Nullable
-    private DialogFragment showGameHostDialog;
+    private DialogFragment gameHostDialog;
 
     @Nullable
     private DialogFragment gameHostInputDialog;
-
-    @Inject
-    @NonNull
-    AtomicReference<UUID> clientTaskIdState;
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> createNewRoomButtonClickedCallback = (handler, t) -> {
@@ -99,15 +83,15 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> connectRoomButtonClickedCallback = (handler, t) -> {
-        gameHostInputDialog = new GameHostDialogFragment();
-        gameHostInputDialog.show(getParentFragmentManager(), GAME_HOST_INPUT_DIALOG_TAG);
-        viewModel.onConnectRoomButtonClickedFinished();
-    };
+        gameHostInputDialog = new GameHostInputDialogFragment();
+        gameHostInputDialog.show(getChildFragmentManager(), GAME_HOST_INPUT_DIALOG_TAG);
 
-    @NonNull
-    private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> gameCancelButtonClickedCallback = (handler, t) -> {
-        handler.onGameCancelButtonClicked();
-        viewModel.onGameCancelButtonClickedFinished();
+        viewModel.onConnectRoomButtonClickedFinished();
+
+        getChildFragmentManager()
+                .beginTransaction()
+                .addToBackStack(GAME_HOST_INPUT_DIALOG_TAG)
+                .commit();
     };
 
     @NonNull
@@ -129,10 +113,15 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
         public void onReceive(final @Nullable Context context, final @NonNull Intent intent) {
             final String host = intent.getStringExtra(GAME_HOST_KEY);
             Objects.requireNonNull(host);
-
             Log.d(TAG, String.format("Host %s is received", host));
-            showGameHostDialog = new GameHostDialogFragment();
-            showGameHostDialog.show(getParentFragmentManager(), GAME_HOST_DIALOG_TAG);
+
+            gameHostDialog = GameHostDialogFragment.newInstance(host);
+            gameHostDialog.show(getChildFragmentManager(), GAME_HOST_DIALOG_TAG);
+
+            getChildFragmentManager()
+                    .beginTransaction()
+                    .addToBackStack(GAME_HOST_DIALOG_TAG)
+                    .commit();
         }
     };
 
@@ -183,7 +172,6 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     public void observeUIStateChanges() {
         createNewRoomButtonClickedCallback.observe(this, viewModel.getCreateNewRoomButtonClickedState(), viewModel.handler);
         connectRoomButtonClickedCallback.observe(this, viewModel.getConnectRoomButtonClickedState(), viewModel.handler);
-        gameCancelButtonClickedCallback.observe(this, viewModel.getGameCancelButtonClickedState(), viewModel.handler);
         gameStartReceivedCallback.observe(this, viewModel.getGameStartReceivedState(), viewModel.handler);
     }
 
@@ -206,30 +194,28 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private void dismissGameHostDialog() {
         Log.d(TAG, "Stopping show host dialog");
 
-        if (showGameHostDialog != null) {
-            showGameHostDialog.dismiss();
-            showGameHostDialog = null;
+        if (gameHostDialog != null) {
+            gameHostDialog.dismissNow();
+
+            getChildFragmentManager()
+                    .beginTransaction()
+                    .remove(gameHostDialog)
+                    .commitNow();
+
+            gameHostDialog = null;
             Log.d(TAG, "Dialog is stopped");
         }
     }
 
-    private void connectClientSocket(final @NonNull String host) throws IOException {
-        final OneTimeWorkRequest clientTask = new OneTimeWorkRequest
-                .Builder(ClientLauncher.class)
-                .setInputData(
-                        new Data.Builder()
-                                .putString(ClientLauncher.HOST_KEY, host)
-                                .build()
-                )
-                .build();
-
-        clientTaskIdState.set(clientTask.getId());
-        WorkManager.getInstance(requireContext()).enqueue(clientTask);
-    }
-
     private void dismissGameHostInputDialog() {
         if (gameHostInputDialog != null) {
-            gameHostInputDialog.dismiss();
+            gameHostInputDialog.dismissNow();
+
+            getChildFragmentManager()
+                    .beginTransaction()
+                    .remove(gameHostInputDialog)
+                    .commitNow();
+
             gameHostInputDialog = null;
         }
     }
