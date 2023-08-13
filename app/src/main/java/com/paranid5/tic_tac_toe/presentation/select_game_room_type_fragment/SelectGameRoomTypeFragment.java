@@ -1,8 +1,8 @@
 package com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.work.Data;
@@ -46,6 +47,12 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private static final String TAG = SelectGameRoomTypeFragment.class.getSimpleName();
 
     @NonNull
+    private static final String GAME_HOST_DIALOG_TAG = GameHostDialogFragment.class.getSimpleName();
+
+    @NonNull
+    private static final String GAME_HOST_INPUT_DIALOG_TAG = GameHostInputDialogFragment.class.getSimpleName();
+
+    @NonNull
     private static final String FRAGMENT_LOCATION = "com.paranid5.tic_tac_toe.presentation.select_game_room_type_fragment";
 
     @NonNull
@@ -75,10 +82,10 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     private SelectGameRoomTypeViewModel viewModel;
 
     @Nullable
-    private DialogInterface showGameHostDialog;
+    private DialogFragment showGameHostDialog;
 
     @Nullable
-    private DialogInterface gameHostInputDialog;
+    private DialogFragment gameHostInputDialog;
 
     @Inject
     @NonNull
@@ -92,7 +99,8 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> connectRoomButtonClickedCallback = (handler, t) -> {
-        gameHostInputDialog = showGameHostInput();
+        gameHostInputDialog = new GameHostDialogFragment();
+        gameHostInputDialog.show(getParentFragmentManager(), GAME_HOST_INPUT_DIALOG_TAG);
         viewModel.onConnectRoomButtonClickedFinished();
     };
 
@@ -123,7 +131,8 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
             Objects.requireNonNull(host);
 
             Log.d(TAG, String.format("Host %s is received", host));
-            showGameHostDialog = showGameHost(host);
+            showGameHostDialog = new GameHostDialogFragment();
+            showGameHostDialog.show(getParentFragmentManager(), GAME_HOST_DIALOG_TAG);
         }
     };
 
@@ -135,7 +144,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
             final PlayerRole role = PlayerRole.values()[intent.getIntExtra(PLAYER_ROLE_KEY, 0)];
             Log.d(TAG, String.format("Game is started as %s", role));
 
-            dismissShowGameHostDialog();
+            dismissGameHostDialog();
             dismissGameHostInputDialog();
             viewModel.onGameStartReceived(playerType, role);
         }
@@ -166,7 +175,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     public void onStop() {
         super.onStop();
         unregisterReceivers();
-        dismissShowGameHostDialog();
+        dismissGameHostDialog();
         dismissGameHostInputDialog();
     }
 
@@ -194,21 +203,7 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
         stopReceiver(gameStartReceiver);
     }
 
-    private AlertDialog showGameHost(final @NonNull String host) {
-        return new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.your_ip)
-                .setMessage(host)
-                .setNegativeButton(
-                        R.string.cancel,
-                        (dialogInterface, i) -> {
-                            viewModel.onGameCancelButtonClicked();
-                            dialogInterface.dismiss();
-                        }
-                )
-                .show();
-    }
-
-    private void dismissShowGameHostDialog() {
+    private void dismissGameHostDialog() {
         Log.d(TAG, "Stopping show host dialog");
 
         if (showGameHostDialog != null) {
@@ -216,32 +211,6 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
             showGameHostDialog = null;
             Log.d(TAG, "Dialog is stopped");
         }
-    }
-
-    private AlertDialog showGameHostInput() {
-        final DialogInputHostBinding dialogBinding = DialogInputHostBinding.inflate(getLayoutInflater());
-
-        return new AlertDialog.Builder(requireContext())
-                .setCancelable(false)
-                .setTitle(R.string.host_ip)
-                .setView(dialogBinding.getRoot())
-                .setPositiveButton(
-                        R.string.ok,
-                        (dialogInterface, i) -> {
-                            try {
-                                connectClientSocket(dialogBinding.hostInput.getText().toString());
-                            } catch (final IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            dialogInterface.dismiss();
-                        }
-                )
-                .setNegativeButton(
-                        R.string.cancel,
-                        (dialogInterface, i) -> dialogInterface.dismiss()
-                )
-                .show();
     }
 
     private void connectClientSocket(final @NonNull String host) throws IOException {

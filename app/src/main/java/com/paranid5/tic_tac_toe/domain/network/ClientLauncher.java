@@ -49,6 +49,10 @@ public final class ClientLauncher extends RxWorker {
 
     public static final byte HOST_WON = 2;
 
+    public static final byte CLIENT_WON = 3;
+
+    public static final byte DRAW = 4;
+
     public static final String HOST_KEY = "host";
 
     @EntryPoint
@@ -67,6 +71,8 @@ public final class ClientLauncher extends RxWorker {
         rh.put(GAME_START, ClientLauncher::onGameStartReceived);
         rh.put(HOST_MOVED, ClientLauncher::onHostMoved);
         rh.put(HOST_WON, ClientLauncher::onHostWon);
+        rh.put(CLIENT_WON, ClientLauncher::onClientWon);
+        rh.put(DRAW, ClientLauncher::onDraw);
         return rh;
     }
 
@@ -195,12 +201,12 @@ public final class ClientLauncher extends RxWorker {
     }
 
     private static Void onHostMoved(final @NonNull RequestCallbackArgs<Socket> args) {
-        final byte cellPos = args.body[0];
+        final int cellPos = args.body[0];
         Log.d(TAG, String.format("Host moved at %d", cellPos));
 
         args.context.sendBroadcast(
                 new Intent(GameFragment.Broadcast_PLAYER_MOVED)
-                        .putExtra(GameFragment.PLAYER_TYPE, PlayerType.HOST.ordinal())
+                        .putExtra(GameFragment.PLAYER_TYPE_KEY, PlayerType.HOST.ordinal())
                         .putExtra(GameFragment.CELL_KEY, cellPos)
         );
 
@@ -208,9 +214,38 @@ public final class ClientLauncher extends RxWorker {
     }
 
     private static Void onHostWon(final @NonNull RequestCallbackArgs<Socket> args) {
+        return onPlayerWon(args, PlayerType.HOST);
+    }
+
+    private static Void onClientWon(final @NonNull RequestCallbackArgs<Socket> args) {
+        return onPlayerWon(args, PlayerType.CLIENT);
+    }
+
+    private static Void onPlayerWon(
+            final @NonNull RequestCallbackArgs<Socket> args,
+            final @NonNull PlayerType victor
+    ) {
+        final int cellPos = args.body[0];
+        Log.d(TAG, String.format("%s moved at %d and won", victor, cellPos));
+
         args.context.sendBroadcast(
                 new Intent(GameFragment.Broadcast_PLAYER_WON)
-                        .putExtra(GameFragment.PLAYER_TYPE, PlayerType.HOST.ordinal())
+                        .putExtra(GameFragment.PLAYER_TYPE_KEY, victor.ordinal())
+                        .putExtra(GameFragment.CELL_KEY, cellPos)
+        );
+
+        return null;
+    }
+
+    private static Void onDraw(final @NonNull RequestCallbackArgs<Socket> args) {
+        final int cellPos = args.body[0];
+        final int playerTypeOrd = args.body[1];
+        Log.d(TAG, String.format("Draw after move at %d", cellPos));
+
+        args.context.sendBroadcast(
+                new Intent(GameFragment.Broadcast_DRAW)
+                        .putExtra(GameFragment.PLAYER_TYPE_KEY, playerTypeOrd)
+                        .putExtra(GameFragment.CELL_KEY, cellPos)
         );
 
         return null;

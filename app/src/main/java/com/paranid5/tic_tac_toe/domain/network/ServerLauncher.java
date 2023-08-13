@@ -300,20 +300,46 @@ public final class ServerLauncher extends RxWorker {
             final @NonNull Context context,
             final byte cellPosition
     ) throws IOException {
+        sendMovedRequest(context, ClientLauncher.HOST_MOVED, cellPosition);
+    }
+
+    public static void sendHostWon(
+            final @NonNull Context context,
+            final byte cellPosition
+    ) throws IOException {
+        sendMovedRequest(context, ClientLauncher.HOST_WON, cellPosition);
+    }
+
+    public static void sendClientWon(
+            final @NonNull Context context,
+            final byte cellPosition
+    ) throws IOException {
+        sendMovedRequest(context, ClientLauncher.CLIENT_WON, cellPosition);
+    }
+
+    public static void sendDraw(
+            final @NonNull Context context,
+            final @NonNull PlayerType movedPlayer,
+            final byte cellPosition
+    ) throws IOException {
         sendClientRequest(
                 Objects.requireNonNull(serverClientSocket(context)),
                 ByteBuffer.allocate(8),
-                ClientLauncher.HOST_MOVED,
-                new byte[] { cellPosition }
+                ClientLauncher.DRAW,
+                new byte[] { (byte) movedPlayer.ordinal(), cellPosition }
         );
     }
 
-    public static void sendHostWon(final @NonNull Context context) throws IOException {
+    public static void sendMovedRequest(
+            final @NonNull Context context,
+            final byte request,
+            final byte cellPosition
+    ) throws IOException {
         sendClientRequest(
                 Objects.requireNonNull(serverClientSocket(context)),
                 ByteBuffer.allocate(8),
-                ClientLauncher.HOST_WON,
-                new byte[0]
+                request,
+                new byte[] { cellPosition }
         );
     }
 

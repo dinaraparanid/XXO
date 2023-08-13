@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 
+import com.paranid5.tic_tac_toe.data.GameStatus;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.di.GameFragmentPresenterFactory;
@@ -27,6 +28,9 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
 
     @NonNull
     private static final String CURRENT_MOVING_PLAYER = "cur_mov_player";
+
+    @NonNull
+    private static final String GAME_STATUS = "game_status";
 
     @NonNull
     private static final String CELLS = "cells";
@@ -57,10 +61,20 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
         final MutableLiveData<Integer> currentMovingPlayerState =
                 savedStateHandle.getLiveData(CURRENT_MOVING_PLAYER, PlayerRole.CROSS.ordinal());
 
+        final MutableLiveData<GameStatus> gameStatusState =
+                savedStateHandle.getLiveData(GAME_STATUS, new GameStatus.Playing());
+
         final MutableLiveData<Integer[]> cellsState =
                 savedStateHandle.getLiveData(CELLS, new Integer[9]);
 
-        this.presenter = presenterFactory.create(type, role, currentMovingPlayerState, cellsState);
+        this.presenter = presenterFactory.create(
+                type,
+                role,
+                currentMovingPlayerState,
+                gameStatusState,
+                cellsState
+        );
+
         this.handler = handler;
     }
 
@@ -94,7 +108,7 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     }
 
     @NonNull
-    public LiveData<Integer> getPlayerTypeState() { return presenter.typeState; }
+    public LiveData<Integer> getPlayerTypeState() { return presenter.playerTypeState; }
 
     @Nullable
     public PlayerType getPlayerType() {
@@ -103,7 +117,7 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
     }
 
     public void postPlayerType(final @NonNull PlayerType playerType) {
-        presenter.typeState.postValue(playerType.ordinal());
+        presenter.playerTypeState.postValue(playerType.ordinal());
         savedStateHandle.set(PLAYER_TYPE, playerType.ordinal());
     }
 
@@ -137,6 +151,11 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
         savedStateHandle.set(CURRENT_MOVING_PLAYER, currentMovingPlayer.ordinal());
     }
 
+    public void postGameStatus(final @NonNull GameStatus status) {
+        presenter.gameStatusState.postValue(status);
+        savedStateHandle.set(GAME_STATUS, status);
+    }
+
     @NonNull
     public LiveData<Integer[]> getCellsState() {
         return presenter.cellsState;
@@ -149,5 +168,10 @@ public final class GameFragmentViewModel extends ObservableViewModel<GameFragmen
 
     public void startStatesObserving(final @NonNull LifecycleOwner owner) {
         presenter.startStatesObserving(owner);
+    }
+
+    @NonNull
+    public PlayerRole getPlayerRoleByType(final @NonNull PlayerType type) {
+        return type.equals(getPlayerType()) ? getPlayerRole() : getPlayerRole().nextRole();
     }
 }

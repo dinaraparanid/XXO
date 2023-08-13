@@ -20,7 +20,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:fontFamily="@font/pristina"
-                android:text="@{view_model.presenter.turnMessage}"
+                android:text="@{view_model.presenter.gameStatusMessage}"
                 android:textColor="@color/red_dinaraparanid"
                 android:textSize="40sp"
                 android:layout_marginTop="10dp"
@@ -66,7 +66,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[0]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(0)}"/>
 
@@ -76,7 +76,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[1]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(1)}"/>
 
@@ -86,7 +86,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[2]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(2)}"/>
 
@@ -107,7 +107,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[3]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(3)}"/>
 
@@ -117,7 +117,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[4]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(4)}"/>
 
@@ -127,7 +127,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[5]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(5)}"/>
 
@@ -147,7 +147,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[6]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(6)}"/>
 
@@ -157,7 +157,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[7]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(7)}"/>
 
@@ -167,7 +167,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
-                        android:enabled="@{view_model.presenter.moving}"
+                        android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[8]}"
                         android:onClickListener="@{() -> view_model.onCellClicked(8)}"/>
 

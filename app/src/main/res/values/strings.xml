@@ -18,8 +18,8 @@
     <string name="invalid_ip">Invalid ip. Try again</string>
     <string name="results">Results</string>
     <string name="draw">Draw</string>
-    <string name="zero_won">Zero won</string>
-    <string name="cross_won">Cross won</string>
+    <string name="you_won">You won!</string>
+    <string name="you_lose">You lose!</string>
     <string name="cancel">Cancel</string>
     <string name="localhost_hint">127.0.0.1</string>
 </resources>

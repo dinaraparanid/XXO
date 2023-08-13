@@ -22,21 +22,23 @@ public final class MainApplication extends Application implements Configuration.
     @NonNull
     HiltWorkerFactory workerFactory;
 
-    private volatile boolean gameServiceConnected = false;
-
-    public boolean isGameServiceConnected() { return gameServiceConnected; }
+    public volatile boolean isGameServiceConnected = false;
 
     public ServiceConnection gameServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(final @NonNull ComponentName name, final @NonNull IBinder service) {
+            Log.d("MainApplication", String.format("%s is connected", name.getShortClassName()));
+
             if (name.getShortClassName().equals(GAME_SERVICE_NAME))
-                gameServiceConnected = true;
+                isGameServiceConnected = true;
         }
 
         @Override
         public void onServiceDisconnected(final @NonNull ComponentName name) {
+            Log.d("MainApplication", String.format("%s is disconnected", name.getShortClassName()));
+
             if (name.getShortClassName().equals(GAME_SERVICE_NAME))
-                gameServiceConnected = false;
+                isGameServiceConnected = false;
         }
     };
 

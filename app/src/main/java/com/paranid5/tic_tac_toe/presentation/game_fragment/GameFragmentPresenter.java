@@ -14,7 +14,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.paranid5.tic_tac_toe.BR;
 import com.paranid5.tic_tac_toe.R;
+import com.paranid5.tic_tac_toe.data.GameStatus;
 import com.paranid5.tic_tac_toe.data.PlayerRole;
+import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.data.utils.extensions.LiveDataExt;
 import com.paranid5.tic_tac_toe.presentation.ObservablePresenter;
 
@@ -30,7 +32,7 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     private final Context context;
 
     @NonNull
-    public MutableLiveData<Integer> typeState;
+    public MutableLiveData<Integer> playerTypeState;
 
     @NonNull
     public MutableLiveData<Integer> roleState;
@@ -39,24 +41,29 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     public MutableLiveData<Integer> currentMovingPlayerState;
 
     @NonNull
-    public LiveData<Boolean> isMovingState;
+    public MutableLiveData<GameStatus> gameStatusState;
 
     @NonNull
     public MutableLiveData<Integer[]> cellsState;
 
+    @NonNull
+    public LiveData<Boolean> isMovingState;
+
     @AssistedInject
     public GameFragmentPresenter(
             final @ApplicationContext @NonNull Context context,
-            final @Assisted("type") @NonNull MutableLiveData<Integer> typeState,
+            final @Assisted("type") @NonNull MutableLiveData<Integer> playerTypeState,
             final @Assisted("role") @NonNull MutableLiveData<Integer> roleState,
             final @Assisted("cur_mov") @NonNull MutableLiveData<Integer> currentMovingPlayerState,
+            final @Assisted @NonNull MutableLiveData<GameStatus> gameStatusState,
             final @Assisted @NonNull MutableLiveData<Integer[]> cellsState
     ) {
         this.context = context;
-        this.typeState = typeState;
+        this.playerTypeState = playerTypeState;
         this.roleState = roleState;
         this.currentMovingPlayerState = currentMovingPlayerState;
         this.cellsState = cellsState;
+        this.gameStatusState = gameStatusState;
 
         isMovingState = LiveDataExt.combine(
                 roleState,
@@ -67,12 +74,25 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     }
 
     @Bindable
-    public boolean getMoving() { return Boolean.TRUE.equals(isMovingState.getValue()); }
+    public boolean getCellsEnabled() {
+        return getGameStatus() instanceof GameStatus.Playing && isMoving();
+    }
 
     @Bindable
     @NonNull
-    public String getTurnMessage() {
-        return context.getString(getMoving() ? R.string.your_turn : R.string.opponents_turn);
+    public String getGameStatusMessage() {
+        final PlayerType playerType = getPlayerType();
+        final GameStatus gameStatus = getGameStatus();
+
+        if (gameStatus instanceof GameStatus.Victor) {
+            final PlayerType victor = ((GameStatus.Victor) gameStatus).victorType;
+            return context.getString(victor.equals(playerType) ? R.string.you_won : R.string.you_lose);
+        }
+
+        if (gameStatus instanceof GameStatus.Playing)
+            return context.getString(isMoving() ? R.string.your_turn : R.string.opponents_turn);
+
+        return context.getString(R.string.draw);
     }
 
     @Bindable
@@ -91,6 +111,19 @@ public final class GameFragmentPresenter extends ObservablePresenter {
         return cellPics;
     }
 
+    @Nullable
+    private PlayerType getPlayerType() {
+        final Integer typeOrd = playerTypeState.getValue();
+        return typeOrd != null ? PlayerType.values()[typeOrd] : null;
+    }
+
+    private boolean isMoving() { return Boolean.TRUE.equals(isMovingState.getValue()); }
+
+    @NonNull
+    private GameStatus getGameStatus() {
+        return Objects.requireNonNull(gameStatusState.getValue());
+    }
+
     @NonNull
     private Drawable getCellPicture(final @Nullable PlayerRole cellStatus) {
         if (cellStatus == null)
@@ -103,12 +136,13 @@ public final class GameFragmentPresenter extends ObservablePresenter {
     }
 
     public void startStatesObserving(final @NonNull LifecycleOwner owner) {
-        isMovingState.observe(owner, isMoving -> notifyMoveObservers());
+        isMovingState.observe(owner, isMoving -> notifyGameStatusObserversObservers());
+        gameStatusState.observe(owner, gameStatus -> notifyGameStatusObserversObservers());
         cellsState.observe(owner, playerRoles -> notifyPropertyChanged(BR.cellsPictures));
     }
 
-    private void notifyMoveObservers() {
-        notifyPropertyChanged(BR.moving);
-        notifyPropertyChanged(BR.turnMessage);
+    private void notifyGameStatusObserversObservers() {
+        notifyPropertyChanged(BR.cellsEnabled);
+        notifyPropertyChanged(BR.gameStatusMessage);
     }
 }
