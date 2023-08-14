@@ -52,6 +52,9 @@ public final class GameService extends Service implements ReceiverManager {
     public static final String Broadcast_WIFI_HOST = buildBroadcast("WIFI_HOST");
 
     @NonNull
+    public static final String Broadcast_SERVER_LAUNCH_ERROR = buildBroadcast("SERVER_LAUNCH_ERROR");
+
+    @NonNull
     public static final String Broadcast_STOP_SERVER = buildBroadcast("STOP_SERVER");
 
     @NonNull
@@ -62,6 +65,12 @@ public final class GameService extends Service implements ReceiverManager {
 
     @NonNull
     public static final String Broadcast_CLIENT_MOVED = buildBroadcast("CLIENT_MOVED");
+
+    @NonNull
+    public static final String Broadcast_HOST_LEFT = buildBroadcast("HOST_LEFT");
+
+    @NonNull
+    public static final String Broadcast_CLIENT_LEFT = buildBroadcast("CLIENT_LEFT");
 
     @NonNull
     public static final String HOST_ROLE_KEY = "host_role";
@@ -104,6 +113,14 @@ public final class GameService extends Service implements ReceiverManager {
                         ServerLauncher.sendHost(getApplicationContext(), host);
                     }))
                     .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserverOld());
+        }
+    };
+
+    private final BroadcastReceiver serverLaunchErrorReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            stopServer();
+            startServer();
         }
     };
 
@@ -170,22 +187,59 @@ public final class GameService extends Service implements ReceiverManager {
         }
     };
 
+    @NonNull
+    private final BroadcastReceiver hostLeftReceiver = new BroadcastReceiver() {
+        @SuppressLint("CheckResult")
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            Log.d(TAG, "Host left received");
+
+            Completable
+                    .fromRunnable(() -> {
+                        try {
+                            ServerLauncher.sendHostLeft(GameService.this);
+                            stopServer();
+                        } catch (final IOException e) {
+                            e.printStackTrace();
+                        }
+                    })
+                    .subscribeOn(Schedulers.io())
+                    .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
+        }
+    };
+
+    @NonNull
+    private final BroadcastReceiver clientLeftReceiver = new BroadcastReceiver() {
+        @SuppressLint("CheckResult")
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            Log.d(TAG, "Client left received");
+            sendBroadcast(new Intent(GameFragment.Broadcast_PLAYER_LEFT));
+        }
+    };
+
     @Override
     public void registerReceivers() {
         registerReceiverCompat(wifiHostReceiver, Broadcast_WIFI_HOST);
+        registerReceiverCompat(serverLaunchErrorReceiver, Broadcast_SERVER_LAUNCH_ERROR);
         registerReceiverCompat(stopServerReceiver, Broadcast_STOP_SERVER);
         registerReceiverCompat(rolesGeneratedReceiver, Broadcast_ROLES_GENERATED);
         registerReceiverCompat(hostMovedReceiver, Broadcast_HOST_MOVED);
         registerReceiverCompat(clientMovedReceiver, Broadcast_CLIENT_MOVED);
+        registerReceiverCompat(hostLeftReceiver, Broadcast_HOST_LEFT);
+        registerReceiverCompat(clientLeftReceiver, Broadcast_CLIENT_LEFT);
     }
 
     @Override
     public void unregisterReceivers() {
         unregisterReceiver(wifiHostReceiver);
+        unregisterReceiver(serverLaunchErrorReceiver);
         unregisterReceiver(stopServerReceiver);
         unregisterReceiver(rolesGeneratedReceiver);
         unregisterReceiver(hostMovedReceiver);
         unregisterReceiver(clientMovedReceiver);
+        unregisterReceiver(hostLeftReceiver);
+        unregisterReceiver(clientLeftReceiver);
     }
 
     @Override
@@ -230,6 +284,7 @@ public final class GameService extends Service implements ReceiverManager {
 
         if (status instanceof GameStatus.Playing) {
             ServerLauncher.sendHostMoved(GameService.this, cellPos);
+            sendMoved(PlayerType.HOST, cellPos);
             return;
         }
 
@@ -247,6 +302,7 @@ public final class GameService extends Service implements ReceiverManager {
         final GameStatus status = getGameStatus();
 
         if (status instanceof GameStatus.Playing) {
+            ServerLauncher.sendClientMoved(GameService.this, (byte) cellPos);
             sendMoved(PlayerType.CLIENT, cellPos);
             return;
         }

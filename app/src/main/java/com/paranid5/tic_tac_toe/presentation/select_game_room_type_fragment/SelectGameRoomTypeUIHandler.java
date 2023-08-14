@@ -45,7 +45,6 @@ public final class SelectGameRoomTypeUIHandler implements UIHandler {
                         GameFragment.newInstance(playerType, playerRole),
                         null
                 )
-                .addToBackStack(null)
                 .commit();
     }
 }

@@ -47,11 +47,15 @@ public final class ClientLauncher extends RxWorker {
 
     public static final byte HOST_MOVED = 1;
 
-    public static final byte HOST_WON = 2;
+    public static final byte CLIENT_MOVED = 2;
 
-    public static final byte CLIENT_WON = 3;
+    public static final byte HOST_LEFT = 3;
 
-    public static final byte DRAW = 4;
+    public static final byte HOST_WON = 4;
+
+    public static final byte CLIENT_WON = 5;
+
+    public static final byte DRAW = 6;
 
     public static final String HOST_KEY = "host";
 
@@ -70,6 +74,8 @@ public final class ClientLauncher extends RxWorker {
         final Map<Byte, Function<RequestCallbackArgs<Socket>, Void>> rh = new HashMap<>();
         rh.put(GAME_START, ClientLauncher::onGameStartReceived);
         rh.put(HOST_MOVED, ClientLauncher::onHostMoved);
+        rh.put(CLIENT_MOVED, ClientLauncher::onClientMoved);
+        rh.put(HOST_LEFT, ClientLauncher::onHostLeft);
         rh.put(HOST_WON, ClientLauncher::onHostWon);
         rh.put(CLIENT_WON, ClientLauncher::onClientWon);
         rh.put(DRAW, ClientLauncher::onDraw);
@@ -187,6 +193,12 @@ public final class ClientLauncher extends RxWorker {
         out.flush();
     }
 
+    public static void sendLeftToServer(final @NonNull Socket client) throws IOException {
+        final BufferedOutputStream out = new BufferedOutputStream(client.getOutputStream());
+        out.write(new byte[] { ServerLauncher.CLIENT_LEFT });
+        out.flush();
+    }
+
     private static Void onGameStartReceived(final @NonNull RequestCallbackArgs<Socket> args) {
         final PlayerRole role = PlayerRole.values()[args.body[0]];
         Log.d(TAG, String.format("Game is started as %s", role));
@@ -201,13 +213,32 @@ public final class ClientLauncher extends RxWorker {
     }
 
     private static Void onHostMoved(final @NonNull RequestCallbackArgs<Socket> args) {
+        return onPlayerMoved(args, PlayerType.HOST);
+    }
+
+    private static Void onClientMoved(final @NonNull RequestCallbackArgs<Socket> args) {
+        return onPlayerMoved(args, PlayerType.CLIENT);
+    }
+
+    private static Void onPlayerMoved(
+            final @NonNull RequestCallbackArgs<Socket> args,
+            final @NonNull PlayerType playerType
+    ) {
         final int cellPos = args.body[0];
-        Log.d(TAG, String.format("Host moved at %d", cellPos));
+        Log.d(TAG, String.format("%s moved at %d", playerType, cellPos));
 
         args.context.sendBroadcast(
                 new Intent(GameFragment.Broadcast_PLAYER_MOVED)
-                        .putExtra(GameFragment.PLAYER_TYPE_KEY, PlayerType.HOST.ordinal())
+                        .putExtra(GameFragment.PLAYER_TYPE_KEY, playerType.ordinal())
                         .putExtra(GameFragment.CELL_KEY, cellPos)
+        );
+
+        return null;
+    }
+
+    private static Void onHostLeft(final @NonNull RequestCallbackArgs<Socket> args) {
+        args.context.sendBroadcast(
+                new Intent(GameFragment.Broadcast_PLAYER_LEFT)
         );
 
         return null;

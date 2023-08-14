@@ -7,7 +7,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.domain.game_service.GameService;
 import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
@@ -50,13 +49,10 @@ public final class GameFragmentUIHandler implements UIHandler {
             sendMoveToServer(Objects.requireNonNull(client), (byte) cellPosition);
         else
             sendMoveToService(context, cellPosition);
-
-        final PlayerRole nextMovingPlayer = viewModel.getCurrentMovingPlayer().nextRole();
-        viewModel.postCurrentMovingPlayer(nextMovingPlayer);
     }
 
     @NonNull
-    private static DisposableCompletableObserver sendMoveToServer(
+    private DisposableCompletableObserver sendMoveToServer(
             final @NonNull Socket client,
             final byte cellPosition
     ) {
@@ -74,7 +70,7 @@ public final class GameFragmentUIHandler implements UIHandler {
                 .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
     }
 
-    private static void sendMoveToService(
+    private void sendMoveToService(
             final @NonNull Context context,
             final int cellPosition
     ) {
@@ -82,5 +78,25 @@ public final class GameFragmentUIHandler implements UIHandler {
                 new Intent(GameService.Broadcast_HOST_MOVED)
                         .putExtra(GameService.CELL_KEY, cellPosition)
         );
+    }
+
+    public void sendHostLeft(final @NonNull Context context) {
+        Log.d(TAG, "Send host left to service");
+        context.sendBroadcast(new Intent(GameService.Broadcast_HOST_LEFT));
+    }
+
+    @NonNull
+    public Completable sendClientLeft(final @NonNull Socket client) {
+        Log.d(TAG, "Send client left to server");
+
+        return Completable
+                .fromRunnable(() -> {
+                    try {
+                        ClientLauncher.sendLeftToServer(client);
+                    } catch (final IOException e) {
+                        e.printStackTrace();
+                    }
+                })
+                .subscribeOn(Schedulers.io());
     }
 }

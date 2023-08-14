@@ -15,6 +15,7 @@ import androidx.core.util.Pair;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.paranid5.tic_tac_toe.R;
@@ -83,15 +84,17 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
     @NonNull
     private final StateChangedCallback<SelectGameRoomTypeUIHandler, Void> connectRoomButtonClickedCallback = (handler, t) -> {
+        final FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+        final Fragment prev = getChildFragmentManager().findFragmentByTag(GAME_HOST_INPUT_DIALOG_TAG);
+
+        if (prev != null)
+            ft.remove(prev);
+
+        ft.addToBackStack(null);
+
         gameHostInputDialog = new GameHostInputDialogFragment();
         gameHostInputDialog.show(getChildFragmentManager(), GAME_HOST_INPUT_DIALOG_TAG);
-
         viewModel.onConnectRoomButtonClickedFinished();
-
-        getChildFragmentManager()
-                .beginTransaction()
-                .addToBackStack(GAME_HOST_INPUT_DIALOG_TAG)
-                .commit();
     };
 
     @NonNull
@@ -117,11 +120,6 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
 
             gameHostDialog = GameHostDialogFragment.newInstance(host);
             gameHostDialog.show(getChildFragmentManager(), GAME_HOST_DIALOG_TAG);
-
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .addToBackStack(GAME_HOST_DIALOG_TAG)
-                    .commit();
         }
     };
 
@@ -192,30 +190,15 @@ public final class SelectGameRoomTypeFragment extends Fragment implements UIStat
     }
 
     private void dismissGameHostDialog() {
-        Log.d(TAG, "Stopping show host dialog");
-
         if (gameHostDialog != null) {
-            gameHostDialog.dismissNow();
-
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .remove(gameHostDialog)
-                    .commitNow();
-
+            gameHostDialog.dismissAllowingStateLoss();
             gameHostDialog = null;
-            Log.d(TAG, "Dialog is stopped");
         }
     }
 
     private void dismissGameHostInputDialog() {
         if (gameHostInputDialog != null) {
-            gameHostInputDialog.dismissNow();
-
-            getChildFragmentManager()
-                    .beginTransaction()
-                    .remove(gameHostInputDialog)
-                    .commitNow();
-
+            gameHostInputDialog.dismissAllowingStateLoss();
             gameHostInputDialog = null;
         }
     }

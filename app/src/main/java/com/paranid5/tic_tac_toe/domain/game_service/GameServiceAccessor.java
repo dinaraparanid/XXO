@@ -35,4 +35,11 @@ public final class GameServiceAccessor extends ServiceAccessor {
                 Service.BIND_AUTO_CREATE
         );
     }
+
+    public void stopServiceIfLaunched() {
+        if (application.isGameServiceConnected) {
+            application.isGameServiceConnected = false;
+            application.unbindService(application.gameServiceConnection);
+        }
+    }
 }

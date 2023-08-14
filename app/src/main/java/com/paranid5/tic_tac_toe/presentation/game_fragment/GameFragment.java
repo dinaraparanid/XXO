@@ -1,5 +1,6 @@
 package com.paranid5.tic_tac_toe.presentation.game_fragment;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +9,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -23,17 +26,25 @@ import com.paranid5.tic_tac_toe.data.PlayerRole;
 import com.paranid5.tic_tac_toe.data.PlayerType;
 import com.paranid5.tic_tac_toe.databinding.FragmentGameBinding;
 import com.paranid5.tic_tac_toe.domain.ReceiverManager;
+import com.paranid5.tic_tac_toe.domain.game_service.GameServiceAccessor;
+import com.paranid5.tic_tac_toe.domain.utils.network.DefaultDisposableCompletable;
 import com.paranid5.tic_tac_toe.presentation.StateChangedCallback;
 import com.paranid5.tic_tac_toe.presentation.UIStateChangesObserver;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableSource;
+import io.reactivex.rxjava3.observers.DisposableCompletableObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @AndroidEntryPoint
 public final class GameFragment extends Fragment implements UIStateChangesObserver, ReceiverManager {
@@ -50,6 +61,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
     @NonNull
     public static final String Broadcast_PLAYER_MOVED = buildBroadcast("HOST_MOVED");
+
+    @NonNull
+    public static final String Broadcast_PLAYER_LEFT = buildBroadcast("PLAYER_LEFT");
 
     @NonNull
     public static final String Broadcast_PLAYER_WON = buildBroadcast("PLAYER_WON");
@@ -83,6 +97,10 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @NonNull
     AtomicReference<UUID> clientTaskIdState;
 
+    @Inject
+    @NonNull
+    GameServiceAccessor serviceAccessor;
+
     @NonNull
     private final StateChangedCallback<GameFragmentUIHandler, Integer> cellClickedCallback = (handler, cellPos) -> {
         handler.onCellClicked(
@@ -107,6 +125,18 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     };
 
     @NonNull
+    private final BroadcastReceiver playerLeftReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
+            stopNetwork();
+
+            Toast.makeText(requireContext(), R.string.opponent_left, Toast.LENGTH_LONG).show();
+            viewModel.postGameStatus(new GameStatus.Victor(viewModel.getPlayerType()));
+            unregisterReceivers();
+        }
+    };
+
+    @NonNull
     private final BroadcastReceiver playerWonReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final @NonNull Context context, final @NonNull Intent intent) {
@@ -114,13 +144,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
 
             final PlayerType victor = PlayerType.values()[intent.getIntExtra(PLAYER_TYPE_KEY, 0)];
             viewModel.postGameStatus(new GameStatus.Victor(victor));
+            unregisterReceivers();
+            stopNetwork();
             Log.d(TAG, String.format("Player %s has won", victor));
-
-            try {
-                stopClientIfLaunched();
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
         }
     };
 
@@ -131,13 +157,9 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
             receiveAndPostCell(intent);
 
             viewModel.postGameStatus(new GameStatus.Draw());
+            unregisterReceivers();
+            stopNetwork();
             Log.d(TAG, "Draw");
-
-            try {
-                stopClientIfLaunched();
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
         }
     };
 
@@ -169,6 +191,7 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         Log.d(TAG, String.format("Start game as %s %s", type, role));
 
         viewModel = new ViewModelProvider(this).get(GameFragmentViewModel.class);
+
         if (viewModel.getPlayerType() == null) viewModel.postPlayerType(type);
         if (viewModel.getPlayerRole() == null) viewModel.postPlayerRole(role);
 
@@ -178,30 +201,37 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         binding.setViewModel(viewModel);
 
         observeUIStateChanges();
+        registerReceivers();
         return binding.getRoot();
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        registerReceivers();
+    public void onAttach(final @NonNull Context context) {
+        super.onAttach(context);
+
+        requireActivity()
+                .getOnBackPressedDispatcher()
+                .addCallback(onBackPressedCallback());
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        unregisterReceivers();
-    }
+    @NonNull
+    private OnBackPressedCallback onBackPressedCallback() {
+        return new OnBackPressedCallback(true) {
+            @SuppressLint("CheckResult")
+            @Override
+            public void handleOnBackPressed() {
+                unregisterReceivers();
+                viewModel.handler.sendHostLeft(requireContext());
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+                if (getClient() != null)
+                    viewModel.handler
+                            .sendClientLeft(Objects.requireNonNull(getClient()))
+                            .andThen((CompletableSource) s -> stopClientIfLaunched())
+                            .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
 
-        try {
-            stopClientIfLaunched();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
+                getParentFragmentManager().popBackStack();
+            }
+        };
     }
 
     @Override
@@ -216,15 +246,21 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
     @Override
     public void registerReceivers() {
         registerReceiverCompat(playerMovedReceiver, Broadcast_PLAYER_MOVED);
+        registerReceiverCompat(playerLeftReceiver, Broadcast_PLAYER_LEFT);
         registerReceiverCompat(playerWonReceiver, Broadcast_PLAYER_WON);
         registerReceiverCompat(drawReceiver, Broadcast_DRAW);
     }
 
     @Override
     public void unregisterReceivers() {
-        stopReceiver(playerMovedReceiver);
-        stopReceiver(playerWonReceiver);
-        stopReceiver(drawReceiver);
+        try {
+            stopReceiver(playerMovedReceiver);
+            stopReceiver(playerLeftReceiver);
+            stopReceiver(playerWonReceiver);
+            stopReceiver(drawReceiver);
+        } catch (final IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
     private void receiveAndPostCell(final @NonNull Intent intent) {
@@ -237,23 +273,43 @@ public final class GameFragment extends Fragment implements UIStateChangesObserv
         viewModel.postCellsState(cells);
     }
 
-    private void stopClientIfLaunched() throws IOException {
+    private void stopNetwork() {
+        stopServiceIfLaunched();
+        stopClientIfLaunched();
+    }
+
+    private void stopServiceIfLaunched() {
+        try {
+            serviceAccessor.stopServiceIfLaunched();
+        } catch (final IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Nullable
+    private DisposableCompletableObserver stopClientIfLaunched() {
         Log.d(TAG, "Stopping client");
 
         final UUID clientTaskId = clientTaskIdState.get();
 
         if (clientTaskId == null)
-            return;
+            return null;
 
-        WorkManager
-                .getInstance(requireContext())
-                .cancelWorkById(clientTaskIdState.get());
+        return Completable.fromRunnable(() -> {
+                    WorkManager
+                            .getInstance(requireContext())
+                            .cancelWorkById(clientTaskId);
 
-        clientTaskIdState.set(null);
+                    clientTaskIdState.set(null);
 
-        if (getClient() != null) {
-            getClient().close();
-            clientState.postValue(null);
-        }
+                    try {
+                        getClient().close();
+                        clientState.postValue(null);
+                    } catch (final IOException e) {
+                        e.printStackTrace();
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .subscribeWith(DefaultDisposableCompletable.disposableCompletableObserver());
     }
 }

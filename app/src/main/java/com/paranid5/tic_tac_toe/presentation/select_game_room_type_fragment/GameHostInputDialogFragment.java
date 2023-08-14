@@ -5,12 +5,12 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.paranid5.tic_tac_toe.R;
 import com.paranid5.tic_tac_toe.databinding.DialogInputHostBinding;
 import com.paranid5.tic_tac_toe.domain.network.ClientLauncher;
@@ -34,8 +34,7 @@ public final class GameHostInputDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(final @Nullable Bundle savedInstanceState) {
         final DialogInputHostBinding dialogBinding = DialogInputHostBinding.inflate(getLayoutInflater());
 
-        final AlertDialog d = new AlertDialog.Builder(requireContext())
-                .setCancelable(false)
+        return new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.host_ip)
                 .setView(dialogBinding.getRoot())
                 .setPositiveButton(
@@ -47,18 +46,14 @@ public final class GameHostInputDialogFragment extends DialogFragment {
                                 e.printStackTrace();
                             }
 
-                            dialogInterface.dismiss();
+                            dismiss();
                         }
                 )
                 .setNegativeButton(
                         R.string.cancel,
-                        (dialogInterface, i) -> dialogInterface.dismiss()
+                        (dialogInterface, i) -> dismiss()
                 )
                 .create();
-
-        setCancelable(false);
-        d.setCanceledOnTouchOutside(false);
-        return d;
     }
 
     private void connectClientSocket(final @NonNull String host) throws IOException {

@@ -35,7 +35,6 @@ public final class SelectGameTypeUIHandler implements UIHandler {
                         SelectGameRoomTypeFragment.class,
                         null
                 )
-                .addToBackStack(null)
                 .commit();
     }
 }

@@ -5,9 +5,9 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.paranid5.tic_tac_toe.R;
 
 import javax.inject.Inject;
@@ -35,12 +35,12 @@ public final class GameHostDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(final @Nullable Bundle savedInstanceState) {
         final String host = requireArguments().getString(HOST_KEY);
 
-        return new AlertDialog.Builder(requireContext())
+        return new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.your_ip)
                 .setMessage(host)
                 .setNegativeButton(
                         R.string.cancel,
-                        (dialogInterface, i) -> dialogInterface.dismiss()
+                        (dialogInterface, i) -> dismiss()
                 )
                 .create();
     }

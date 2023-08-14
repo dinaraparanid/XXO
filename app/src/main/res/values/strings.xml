@@ -22,4 +22,6 @@
     <string name="you_lose">You lose!</string>
     <string name="cancel">Cancel</string>
     <string name="localhost_hint">127.0.0.1</string>
+    <string name="opponent_left">Opponent has left the game</string>
+    <string name="server_error">Server binding error. Try to restart app</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
         <variable
@@ -10,9 +10,9 @@
     </data>
 
     <carbon.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/app_background">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/app_background">
 
         <carbon.widget.TextView
                 android:id="@+id/turn"
@@ -23,7 +23,7 @@
                 android:text="@{view_model.presenter.gameStatusMessage}"
                 android:textColor="@color/red_dinaraparanid"
                 android:textSize="40sp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="5dp"
                 app:carbon_cornerRadius="10dp"
                 app:carbon_elevation="0dp"
                 app:carbon_elevationAmbientShadowColor="@android:color/transparent"
@@ -36,140 +36,141 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent" />
 
         <carbon.widget.LinearLayout
                 android:id="@+id/game_table"
                 android:layout_width="300dp"
-                android:layout_height="500dp"
-                android:layout_marginBottom="5dp"
+                android:layout_marginBottom="15dp"
                 android:divider="@drawable/cells_divider"
                 android:orientation="vertical"
                 android:showDividers="middle"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/turn">
+                app:layout_constraintTop_toBottomOf="@+id/turn"
+                android:layout_marginTop="15dp"
+                android:layout_height="0dp">
 
             <carbon.widget.LinearLayout
                     android:id="@+id/first_line"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_width="fill_parent"
                     android:layout_weight="1"
                     android:divider="@drawable/cells_divider"
                     android:orientation="horizontal"
-                    android:showDividers="middle">
+                    android:showDividers="middle"
+                    android:layout_height="fill_parent">
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_1"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[0]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(0)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(0)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_2"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[1]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(1)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(1)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_3"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[2]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(2)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(2)}" />
 
             </carbon.widget.LinearLayout>
 
             <carbon.widget.LinearLayout
                     android:id="@+id/second_line"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_width="fill_parent"
                     android:layout_weight="1"
                     android:divider="@drawable/cells_divider"
                     android:orientation="horizontal"
-                    android:showDividers="middle">
+                    android:showDividers="middle"
+                    android:layout_height="fill_parent">
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_4"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[3]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(3)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(3)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_5"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[4]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(4)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(4)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_6"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[5]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(5)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(5)}" />
 
             </carbon.widget.LinearLayout>
 
             <carbon.widget.LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_width="fill_parent"
                     android:layout_weight="1"
                     android:divider="@drawable/cells_divider"
                     android:orientation="horizontal"
-                    android:showDividers="middle">
+                    android:showDividers="middle"
+                    android:layout_height="fill_parent">
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_7"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[6]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(6)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(6)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_8"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[7]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(7)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(7)}" />
 
                 <carbon.widget.ImageView
                         android:id="@+id/button_9"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
                         android:layout_weight="1"
                         android:scaleType="fitCenter"
                         android:enabled="@{view_model.presenter.cellsEnabled}"
                         android:src="@{view_model.presenter.cellsPictures[8]}"
-                        android:onClickListener="@{() -> view_model.onCellClicked(8)}"/>
+                        android:onClickListener="@{() -> view_model.onCellClicked(8)}" />
 
             </carbon.widget.LinearLayout>
 

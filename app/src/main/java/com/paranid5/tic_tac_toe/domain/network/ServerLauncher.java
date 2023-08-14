@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
@@ -55,6 +56,8 @@ public final class ServerLauncher extends RxWorker {
 
     public static final byte CLIENT_MOVED = 0;
 
+    public static final byte CLIENT_LEFT = 1;
+
     @EntryPoint
     @InstallIn(SingletonComponent.class)
     interface ServerLauncherEntryPoint {
@@ -69,6 +72,7 @@ public final class ServerLauncher extends RxWorker {
     private static Map<Byte, Function<RequestCallbackArgs<SocketChannel>, Void>> buildRequestHandlers() {
         final Map<Byte, Function<RequestCallbackArgs<SocketChannel>, Void>> rh = new HashMap<>();
         rh.put(CLIENT_MOVED, ServerLauncher::onClientMoved);
+        rh.put(CLIENT_LEFT, ServerLauncher::onClientLeft);
         return rh;
     }
 
@@ -84,8 +88,20 @@ public final class ServerLauncher extends RxWorker {
         return ServerLauncher.getWifiHost(getApplicationContext()).map(host -> {
             postHost(getApplicationContext(), Objects.requireNonNull(host));
             ServerLauncher.sendHost(getApplicationContext(), host);
-            ServerLauncher.launchServer(getApplicationContext(), host);
-            return Result.success();
+
+            try {
+                ServerLauncher.launchServer(getApplicationContext(), host);
+                return Result.success();
+            } catch (final Exception e) {
+                e.printStackTrace();
+
+                if (e instanceof ExecutionException)
+                    getApplicationContext().sendBroadcast(
+                            new Intent(GameService.Broadcast_SERVER_LAUNCH_ERROR)
+                    );
+
+                return Result.failure();
+            }
         });
     }
 
@@ -243,6 +259,7 @@ public final class ServerLauncher extends RxWorker {
 
         if (client.read(buffer) < 0) {
             Log.d(TAG, "Connection with client is lost");
+            context.sendBroadcast(new Intent(GameService.Broadcast_CLIENT_LEFT));
             client.close();
             return;
         }
@@ -296,11 +313,32 @@ public final class ServerLauncher extends RxWorker {
         return null;
     }
 
+    private static Void onClientLeft(final @NonNull RequestCallbackArgs<SocketChannel> args) {
+        args.context.sendBroadcast(new Intent(GameService.Broadcast_CLIENT_LEFT));
+        return null;
+    }
+
     public static void sendHostMoved(
             final @NonNull Context context,
             final byte cellPosition
     ) throws IOException {
         sendMovedRequest(context, ClientLauncher.HOST_MOVED, cellPosition);
+    }
+
+    public static void sendClientMoved(
+            final @NonNull Context context,
+            final byte cellPosition
+    ) throws IOException {
+        sendMovedRequest(context, ClientLauncher.CLIENT_MOVED, cellPosition);
+    }
+
+    public static void sendHostLeft(final @NonNull Context context) throws IOException {
+        sendClientRequest(
+                Objects.requireNonNull(serverClientSocket(context)),
+                ByteBuffer.allocate(8),
+                ClientLauncher.HOST_LEFT,
+                new byte[0]
+        );
     }
 
     public static void sendHostWon(
@@ -356,7 +394,7 @@ public final class ServerLauncher extends RxWorker {
 
     private static void postClientSocket(
             final @NonNull Context ctx,
-            final @Nullable SocketChannel client
+            final @NonNull SocketChannel client
     ) {
         EntryPointAccessors
                 .fromApplication(
