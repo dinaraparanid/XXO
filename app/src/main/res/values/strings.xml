@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Tic-Tac-Toe</string>
+    <string name="app_name">XXO</string>
     <string name="play">Play</string>
     <string name="settings">Settings</string>
     <string name="singleplayer">Singleplayer</string>
