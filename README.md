@@ -10,9 +10,9 @@
 ### **Preview**
 
 <p float="left">
-  <img src="app/src/main/res/drawable/host_preview.gif" height="400" />
+  <img src="app/src/main/res/drawable/host_preview.gif" height="300" />
   <>
-  <img src="app/src/main/res/drawable/client_preview.gif" height="400" /> 
+  <img src="app/src/main/res/drawable/client_preview.gif" height="300" /> 
 </p>
 
 ### **Stack**
