@@ -27,6 +27,7 @@
     <li>Java Net (client)</li>
     <li>Jetpack ViewModel</li>
     <li>Jetpack Constraint Layout</li>
+    <li>AndroidX.Fragment</li>
     <li>Bounded Service + Broadcast Receivers</li>
     <li>Android Material Design views</li>
     <li>Carbon UI library</li>
